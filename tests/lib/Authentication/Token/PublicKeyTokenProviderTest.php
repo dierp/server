@@ -548,8 +548,7 @@ class PublicKeyTokenProviderTest extends TestCase {
 			IToken::PERMANENT_TOKEN,
 			IToken::REMEMBER);
 
-		$this->mapper->expects($this->once())
-			->method('hasExpiredTokens')
+		$this->mapper->method('hasExpiredTokens')
 			->with($uid)
 			->willReturn(true);
 		$this->mapper->expects($this->once())
@@ -568,8 +567,7 @@ class PublicKeyTokenProviderTest extends TestCase {
 	public function testUpdatePasswordsNotRequired() {
 		$uid = 'myUID';
 
-		$this->mapper->expects($this->once())
-			->method('hasExpiredTokens')
+		$this->mapper->method('hasExpiredTokens')
 			->with($uid)
 			->willReturn(false);
 		$this->mapper->expects($this->never())
