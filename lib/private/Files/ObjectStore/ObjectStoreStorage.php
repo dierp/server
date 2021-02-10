@@ -10,7 +10,6 @@
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Tigran Mkrtchyan <tigran.mkrtchyan@desy.de>
  *
  * @license AGPL-3.0
  *
@@ -440,9 +439,9 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common {
 
 	public function file_put_contents($path, $data) {
 		$handle = $this->fopen($path, 'w+');
-		$result = fwrite($handle, $data);
+		fwrite($handle, $data);
 		fclose($handle);
-		return $result;
+		return true;
 	}
 
 	public function writeStream(string $path, $stream, int $size = null): int {

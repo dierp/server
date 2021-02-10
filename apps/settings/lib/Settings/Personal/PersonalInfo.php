@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 /**
  * @copyright Copyright (c) 2017 Arthur Schiwon <blizzz@arthur-schiwon.de>
  *
@@ -14,7 +11,6 @@ declare(strict_types=1);
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Citharel <nextcloud@tcit.fr>
- * @author Vincent Petry <vincent@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -37,7 +33,6 @@ namespace OCA\Settings\Settings\Personal;
 
 use OC\Accounts\AccountManager;
 use OCA\FederatedFileSharing\FederatedShareProvider;
-use OCP\Accounts\IAccountManager;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Files\FileInfo;
@@ -67,6 +62,14 @@ class PersonalInfo implements ISettings {
 	/** @var IL10N */
 	private $l;
 
+	/**
+	 * @param IConfig $config
+	 * @param IUserManager $userManager
+	 * @param IGroupManager $groupManager
+	 * @param AccountManager $accountManager
+	 * @param IFactory $l10nFactory
+	 * @param IL10N $l
+	 */
 	public function __construct(
 		IConfig $config,
 		IUserManager $userManager,
@@ -85,7 +88,11 @@ class PersonalInfo implements ISettings {
 		$this->l = $l;
 	}
 
-	public function getForm(): TemplateResponse {
+	/**
+	 * @return TemplateResponse returns the instance with all parameters set, ready to be rendered
+	 * @since 9.1
+	 */
+	public function getForm() {
 		$federatedFileSharingEnabled = $this->appManager->isEnabledForUser('federatedfilesharing');
 		$lookupServerUploadEnabled = false;
 		if ($federatedFileSharingEnabled) {
@@ -119,23 +126,23 @@ class PersonalInfo implements ISettings {
 			'quota' => $storageInfo['quota'],
 			'avatarChangeSupported' => $user->canChangeAvatar(),
 			'lookupServerUploadEnabled' => $lookupServerUploadEnabled,
-			'avatarScope' => $userData[IAccountManager::PROPERTY_AVATAR]['scope'],
+			'avatarScope' => $userData[AccountManager::PROPERTY_AVATAR]['scope'],
 			'displayNameChangeSupported' => $user->canChangeDisplayName(),
-			'displayName' => $userData[IAccountManager::PROPERTY_DISPLAYNAME]['value'],
-			'displayNameScope' => $userData[IAccountManager::PROPERTY_DISPLAYNAME]['scope'],
-			'email' => $userData[IAccountManager::PROPERTY_EMAIL]['value'],
-			'emailScope' => $userData[IAccountManager::PROPERTY_EMAIL]['scope'],
-			'emailVerification' => $userData[IAccountManager::PROPERTY_EMAIL]['verified'],
-			'phone' => $userData[IAccountManager::PROPERTY_PHONE]['value'],
-			'phoneScope' => $userData[IAccountManager::PROPERTY_PHONE]['scope'],
-			'address' => $userData[IAccountManager::PROPERTY_ADDRESS]['value'],
-			'addressScope' => $userData[IAccountManager::PROPERTY_ADDRESS]['scope'],
-			'website' => $userData[IAccountManager::PROPERTY_WEBSITE]['value'],
-			'websiteScope' => $userData[IAccountManager::PROPERTY_WEBSITE]['scope'],
-			'websiteVerification' => $userData[IAccountManager::PROPERTY_WEBSITE]['verified'],
-			'twitter' => $userData[IAccountManager::PROPERTY_TWITTER]['value'],
-			'twitterScope' => $userData[IAccountManager::PROPERTY_TWITTER]['scope'],
-			'twitterVerification' => $userData[IAccountManager::PROPERTY_TWITTER]['verified'],
+			'displayName' => $userData[AccountManager::PROPERTY_DISPLAYNAME]['value'],
+			'displayNameScope' => $userData[AccountManager::PROPERTY_DISPLAYNAME]['scope'],
+			'email' => $userData[AccountManager::PROPERTY_EMAIL]['value'],
+			'emailScope' => $userData[AccountManager::PROPERTY_EMAIL]['scope'],
+			'emailVerification' => $userData[AccountManager::PROPERTY_EMAIL]['verified'],
+			'phone' => $userData[AccountManager::PROPERTY_PHONE]['value'],
+			'phoneScope' => $userData[AccountManager::PROPERTY_PHONE]['scope'],
+			'address' => $userData[AccountManager::PROPERTY_ADDRESS]['value'],
+			'addressScope' => $userData[AccountManager::PROPERTY_ADDRESS]['scope'],
+			'website' =>  $userData[AccountManager::PROPERTY_WEBSITE]['value'],
+			'websiteScope' =>  $userData[AccountManager::PROPERTY_WEBSITE]['scope'],
+			'websiteVerification' => $userData[AccountManager::PROPERTY_WEBSITE]['verified'],
+			'twitter' => $userData[AccountManager::PROPERTY_TWITTER]['value'],
+			'twitterScope' => $userData[AccountManager::PROPERTY_TWITTER]['scope'],
+			'twitterVerification' => $userData[AccountManager::PROPERTY_TWITTER]['verified'],
 			'groups' => $this->getGroups($user),
 		] + $messageParameters + $languageParameters + $localeParameters;
 
@@ -147,7 +154,7 @@ class PersonalInfo implements ISettings {
 	 * @return string the section ID, e.g. 'sharing'
 	 * @since 9.1
 	 */
-	public function getSection(): string {
+	public function getSection() {
 		return 'personal-info';
 	}
 
@@ -159,7 +166,7 @@ class PersonalInfo implements ISettings {
 	 * E.g.: 70
 	 * @since 9.1
 	 */
-	public function getPriority(): int {
+	public function getPriority() {
 		return 10;
 	}
 
@@ -169,9 +176,9 @@ class PersonalInfo implements ISettings {
 	 * @param IUser $user
 	 * @return array
 	 */
-	private function getGroups(IUser $user): array {
+	private function getGroups(IUser $user) {
 		$groups = array_map(
-			static function (IGroup $group) {
+			function (IGroup $group) {
 				return $group->getDisplayName();
 			},
 			$this->groupManager->getUserGroups($user)
@@ -188,7 +195,7 @@ class PersonalInfo implements ISettings {
 	 * @param IUser $user
 	 * @return array
 	 */
-	private function getLanguages(IUser $user): array {
+	private function getLanguages(IUser $user) {
 		$forceLanguage = $this->config->getSystemValue('force_language', false);
 		if ($forceLanguage !== false) {
 			return [];
@@ -221,7 +228,7 @@ class PersonalInfo implements ISettings {
 		);
 	}
 
-	private function getLocales(IUser $user): array {
+	private function getLocales(IUser $user) {
 		$forceLanguage = $this->config->getSystemValue('force_locale', false);
 		if ($forceLanguage !== false) {
 			return [];
@@ -266,8 +273,8 @@ class PersonalInfo implements ISettings {
 	 * @param array $userData
 	 * @return array
 	 */
-	private function getMessageParameters(array $userData): array {
-		$needVerifyMessage = [IAccountManager::PROPERTY_EMAIL, IAccountManager::PROPERTY_WEBSITE, IAccountManager::PROPERTY_TWITTER];
+	private function getMessageParameters(array $userData) {
+		$needVerifyMessage = [AccountManager::PROPERTY_EMAIL, AccountManager::PROPERTY_WEBSITE, AccountManager::PROPERTY_TWITTER];
 		$messageParameters = [];
 		foreach ($needVerifyMessage as $property) {
 			switch ($userData[$property]['verified']) {

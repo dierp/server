@@ -11,6 +11,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Roger Szabo <roger.szabo@web.de>
+ * @author Thomas Müller <thomas.mueller@tmit.eu>
  *
  * @license AGPL-3.0
  *
@@ -60,16 +61,15 @@ $userManager = new \OCA\User_LDAP\User\Manager(
 	new \OCA\User_LDAP\LogWrapper(),
 	\OC::$server->getAvatarManager(),
 	new \OCP\Image(),
+	\OC::$server->getDatabaseConnection(),
 	\OC::$server->getUserManager(),
-	\OC::$server->getNotificationManager(),
-	\OC::$server->get(\OCP\Share\IManager::class)
-);
+	\OC::$server->getNotificationManager());
 
 $access = new \OCA\User_LDAP\Access(
 	$con,
 	$ldapWrapper,
 	$userManager,
-	new \OCA\User_LDAP\Helper(\OC::$server->getConfig(), \OC::$server->getDatabaseConnection()),
+	new \OCA\User_LDAP\Helper(\OC::$server->getConfig()),
 	\OC::$server->getConfig(),
 	\OC::$server->getUserManager()
 );

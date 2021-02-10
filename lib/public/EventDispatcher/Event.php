@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCP\EventDispatcher;
 
-use Psr\EventDispatcher\StoppableEventInterface;
+use Symfony\Contracts\EventDispatcher\Event as SymfonyEvent;
 
 /**
  * Base event class for the event dispatcher service
@@ -34,21 +34,9 @@ use Psr\EventDispatcher\StoppableEventInterface;
  * Typically this class isn't instantiated directly but sub classed for specific
  * event types
  *
- * This class extended \Symfony\Contracts\EventDispatcher\Event until 21.0, since
- * 22.0.0 this class directly implements the PSR StoppableEventInterface and no
- * longer relies on Symfony. This transition does not come with any changes in API,
- * the class has the same methods and behavior before and after this change.
- *
  * @since 17.0.0
  */
-class Event implements StoppableEventInterface {
-
-	/**
-	 * @var bool
-	 *
-	 * @since 22.0.0
-	 */
-	private $propagationStopped = false;
+class Event extends SymfonyEvent {
 
 	/**
 	 * Compatibility constructor
@@ -62,26 +50,5 @@ class Event implements StoppableEventInterface {
 	 * @since 18.0.0
 	 */
 	public function __construct() {
-	}
-
-	/**
-	 * Stops the propagation of the event to further event listeners
-	 *
-	 * @return void
-	 *
-	 * @since 22.0.0
-	 */
-	public function stopPropagation(): void {
-		$this->propagationStopped = true;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @since 22.0.0
-	 * @see \Psr\EventDispatcher\StoppableEventInterface
-	 */
-	public function isPropagationStopped(): bool {
-		return $this->propagationStopped;
 	}
 }

@@ -26,10 +26,11 @@ namespace OC\DB;
 
 use Doctrine\DBAL\Schema\Schema;
 use OCP\DB\ISchemaWrapper;
+use OCP\IDBConnection;
 
 class SchemaWrapper implements ISchemaWrapper {
 
-	/** @var Connection */
+	/** @var IDBConnection|Connection */
 	protected $connection;
 
 	/** @var Schema */
@@ -38,7 +39,10 @@ class SchemaWrapper implements ISchemaWrapper {
 	/** @var array */
 	protected $tablesToDelete = [];
 
-	public function __construct(Connection $connection) {
+	/**
+	 * @param IDBConnection $connection
+	 */
+	public function __construct(IDBConnection $connection) {
 		$this->connection = $connection;
 		$this->schema = $this->connection->createSchema();
 	}
@@ -107,7 +111,6 @@ class SchemaWrapper implements ISchemaWrapper {
 	 * @return \Doctrine\DBAL\Schema\Table
 	 */
 	public function createTable($tableName) {
-		unset($this->tablesToDelete[$tableName]);
 		return $this->schema->createTable($this->connection->getPrefix() . $tableName);
 	}
 

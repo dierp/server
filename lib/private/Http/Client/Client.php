@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author Carlos Ferreira <carlos@reendex.com>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Joas Schilling <coding@schilljs.com>
@@ -95,24 +94,22 @@ class Client implements IClient {
 			$options[RequestOptions::HEADERS]['Accept-Encoding'] = 'gzip';
 		}
 
-		// Fallback for save_to
-		if (isset($options['save_to'])) {
-			$options['sink'] = $options['save_to'];
-			unset($options['save_to']);
-		}
-
 		return $options;
 	}
 
 	private function getCertBundle(): string {
+		if ($this->certificateManager->listCertificates() !== []) {
+			return $this->certificateManager->getAbsoluteBundlePath();
+		}
+
 		// If the instance is not yet setup we need to use the static path as
 		// $this->certificateManager->getAbsoluteBundlePath() tries to instantiate
 		// a view
-		if ($this->config->getSystemValue('installed', false) === false) {
-			return \OC::$SERVERROOT . '/resources/config/ca-bundle.crt';
+		if ($this->config->getSystemValue('installed', false)) {
+			return $this->certificateManager->getAbsoluteBundlePath(null);
 		}
 
-		return $this->certificateManager->getAbsoluteBundlePath();
+		return \OC::$SERVERROOT . '/resources/config/ca-bundle.crt';
 	}
 
 	/**
@@ -224,7 +221,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,
@@ -255,7 +252,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,
@@ -290,7 +287,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,
@@ -330,7 +327,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,
@@ -365,7 +362,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,
@@ -400,7 +397,7 @@ class Client implements IClient {
 	 *                   'referer'   => true,     // add a Referer header
 	 *                   'protocols' => ['https'] // only allow https URLs
 	 *              ],
-	 *              'sink' => '/path/to/file', // save to a file or a stream
+	 *              'save_to' => '/path/to/file', // save to a file or a stream
 	 *              'verify' => true, // bool or string to CA file
 	 *              'debug' => true,
 	 *              'timeout' => 5,

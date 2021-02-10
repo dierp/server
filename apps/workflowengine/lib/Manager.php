@@ -21,7 +21,7 @@
 
 namespace OCA\WorkflowEngine;
 
-use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\DBALException;
 use OC\Cache\CappedMemoryCache;
 use OCA\WorkflowEngine\AppInfo\Application;
 use OCA\WorkflowEngine\Check\FileMimeType;
@@ -158,7 +158,7 @@ class Manager implements IManager {
 			$eventNames = \json_decode($row['events']);
 
 			$operation = $row['class'];
-			$entity = $row['entity'];
+			$entity =  $row['entity'];
 
 			$operations[$operation] = $operations[$row['class']] ?? [];
 			$operations[$operation][$entity] = $operations[$operation][$entity] ?? [];
@@ -290,7 +290,7 @@ class Manager implements IManager {
 	 * @param string $operation
 	 * @return array The added operation
 	 * @throws \UnexpectedValueException
-	 * @throw Exception
+	 * @throws DBALException
 	 */
 	public function addOperation(
 		string $class,
@@ -315,7 +315,7 @@ class Manager implements IManager {
 			$this->addScope($id, $scope);
 
 			$this->connection->commit();
-		} catch (Exception $e) {
+		} catch (DBALException $e) {
 			$this->connection->rollBack();
 			throw $e;
 		}
@@ -342,7 +342,7 @@ class Manager implements IManager {
 		$result = $qb->execute();
 
 		$this->operationsByScope[$scopeContext->getHash()] = [];
-		while ($opId = $result->fetchOne()) {
+		while ($opId = $result->fetchColumn(0)) {
 			$this->operationsByScope[$scopeContext->getHash()][] = (int)$opId;
 		}
 		$result->closeCursor();
@@ -358,7 +358,7 @@ class Manager implements IManager {
 	 * @return array The updated operation
 	 * @throws \UnexpectedValueException
 	 * @throws \DomainException
-	 * @throws Exception
+	 * @throws DBALException
 	 */
 	public function updateOperation(
 		int $id,
@@ -392,7 +392,7 @@ class Manager implements IManager {
 				->where($query->expr()->eq('id', $query->createNamedParameter($id)));
 			$query->execute();
 			$this->connection->commit();
-		} catch (Exception $e) {
+		} catch (DBALException $e) {
 			$this->connection->rollBack();
 			throw $e;
 		}
@@ -405,7 +405,7 @@ class Manager implements IManager {
 	 * @param int $id
 	 * @return bool
 	 * @throws \UnexpectedValueException
-	 * @throws Exception
+	 * @throws DBALException
 	 * @throws \DomainException
 	 */
 	public function deleteOperation($id, ScopeContext $scopeContext) {
@@ -425,7 +425,7 @@ class Manager implements IManager {
 					->execute();
 			}
 			$this->connection->commit();
-		} catch (Exception $e) {
+		} catch (DBALException $e) {
 			$this->connection->rollBack();
 			throw $e;
 		}
@@ -704,7 +704,7 @@ class Manager implements IManager {
 	}
 
 	/**
-	 * @return ICheck[]
+	 * @return IEntity[]
 	 */
 	protected function getBuildInChecks(): array {
 		try {

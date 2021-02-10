@@ -7,6 +7,8 @@
  * @author Joas Schilling <coding@schilljs.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Roger Szabo <roger.szabo@web.de>
+ * @author Vinicius Cubas Brand <vinicius@eita.org.br>
  *
  * @license AGPL-3.0
  *
@@ -28,10 +30,12 @@ namespace OCA\User_LDAP\Jobs;
 
 use OC\BackgroundJob\TimedJob;
 use OCA\User_LDAP\Helper;
+use OCA\User_LDAP\LDAP;
 use OCA\User_LDAP\Mapping\UserMapping;
 use OCA\User_LDAP\User\DeletedUsersIndex;
 use OCA\User_LDAP\User_LDAP;
 use OCA\User_LDAP\User_Proxy;
+use OCA\User_LDAP\UserPluginManager;
 
 /**
  * Class CleanUp
@@ -65,12 +69,10 @@ class CleanUp extends TimedJob {
 	/** @var DeletedUsersIndex */
 	protected $dui;
 
-	public function __construct(User_Proxy $userBackend, DeletedUsersIndex $dui) {
+	public function __construct() {
 		$minutes = \OC::$server->getConfig()->getSystemValue(
 			'ldapUserCleanupInterval', (string)$this->defaultIntervalMin);
 		$this->setInterval((int)$minutes * 60);
-		$this->userBackend = $userBackend;
-		$this->dui = $dui;
 	}
 
 	/**
@@ -86,7 +88,7 @@ class CleanUp extends TimedJob {
 		if (isset($arguments['helper'])) {
 			$this->ldapHelper = $arguments['helper'];
 		} else {
-			$this->ldapHelper = new Helper(\OC::$server->getConfig(), \OC::$server->getDatabaseConnection());
+			$this->ldapHelper = new Helper(\OC::$server->getConfig());
 		}
 
 		if (isset($arguments['ocConfig'])) {
@@ -97,6 +99,15 @@ class CleanUp extends TimedJob {
 
 		if (isset($arguments['userBackend'])) {
 			$this->userBackend = $arguments['userBackend'];
+		} else {
+			$this->userBackend =  new User_Proxy(
+				$this->ldapHelper->getServerConfigurationPrefixes(true),
+				new LDAP(),
+				$this->ocConfig,
+				\OC::$server->getNotificationManager(),
+				\OC::$server->getUserSession(),
+				\OC::$server->query(UserPluginManager::class)
+			);
 		}
 
 		if (isset($arguments['db'])) {
@@ -113,6 +124,9 @@ class CleanUp extends TimedJob {
 
 		if (isset($arguments['deletedUsersIndex'])) {
 			$this->dui = $arguments['deletedUsersIndex'];
+		} else {
+			$this->dui = new DeletedUsersIndex(
+				$this->ocConfig, $this->db, $this->mapping);
 		}
 	}
 

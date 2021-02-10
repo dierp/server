@@ -3,6 +3,7 @@
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
  * @author Bart Visscher <bartv@thisnet.nl>
+ * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Christopher Schäpers <kondou@ts.unde.re>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Clark Tomlinson <fallen013@gmail.com>
@@ -193,8 +194,6 @@ class TemplateLayout extends \OC_Template {
 		$jsFiles = self::findJavascriptFiles(\OC_Util::$scripts);
 		$this->assign('jsfiles', []);
 		if ($this->config->getSystemValue('installed', false) && $renderAs != TemplateResponse::RENDER_AS_ERROR) {
-			// this is on purpose outside of the if statement below so that the initial state is prefilled (done in the getConfig() call)
-			// see https://github.com/nextcloud/server/pull/22636 for details
 			$jsConfigHelper = new JSConfigHelper(
 				\OC::$server->getL10N('lib'),
 				\OC::$server->query(Defaults::class),

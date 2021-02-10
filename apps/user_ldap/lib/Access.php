@@ -10,7 +10,6 @@
  * @author bline <scottbeck@gmail.com>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Juan Pablo Villafáñez <jvillafanez@solidgear.es>
@@ -53,7 +52,6 @@ use OC\Hooks\PublicEmitter;
 use OC\ServerNotAvailableException;
 use OCA\User_LDAP\Exceptions\ConstraintViolationException;
 use OCA\User_LDAP\Mapping\AbstractMapping;
-use OCA\User_LDAP\Mapping\UserMapping;
 use OCA\User_LDAP\User\Manager;
 use OCA\User_LDAP\User\OfflineUser;
 use OCP\IConfig;
@@ -76,7 +74,9 @@ class Access extends LDAPUtility {
 	protected $pagedSearchedSuccessful;
 
 	/**
-	 * @var UserMapping $userMapper
+	 * protected $cookies = [];
+	 *
+	 * @var AbstractMapping $userMapper
 	 */
 	protected $userMapper;
 
@@ -123,9 +123,12 @@ class Access extends LDAPUtility {
 	}
 
 	/**
+	 * returns the User Mapper
+	 *
+	 * @return AbstractMapping
 	 * @throws \Exception
 	 */
-	public function getUserMapper(): UserMapping {
+	public function getUserMapper() {
 		if (is_null($this->userMapper)) {
 			throw new \Exception('UserMapper was not assigned to this Access instance.');
 		}
@@ -945,7 +948,7 @@ class Access extends LDAPUtility {
 
 		array_walk($groupRecords, function ($record) use ($idsByDn) {
 			$newlyMapped = false;
-			$gid = $idsByDn[$record['dn'][0]] ?? null;
+			$gid = $uidsByDn[$record['dn'][0]] ?? null;
 			if ($gid === null) {
 				$gid = $this->dn2ocname($record['dn'][0], null, false, $newlyMapped, $record);
 			}
@@ -1782,7 +1785,7 @@ class Access extends LDAPUtility {
 	 *
 	 * @param string $oguid the ObjectGUID in it's binary form as retrieved from AD
 	 * @return string
-	 * @link https://www.php.net/manual/en/function.ldap-get-values-len.php#73198
+	 * @link http://www.php.net/manual/en/function.ldap-get-values-len.php#73198
 	 */
 	private function convertObjectGUID2Str($oguid) {
 		$hex_guid = bin2hex($oguid);

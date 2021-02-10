@@ -25,11 +25,10 @@
 namespace OCA\Files\BackgroundJob;
 
 use OC\Files\Utils\Scanner;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IConfig;
-use OCP\IDBConnection;
 use OCP\ILogger;
+use OCP\IUser;
 use OCP\IUserManager;
 
 /**
@@ -47,42 +46,36 @@ class ScanFiles extends \OC\BackgroundJob\TimedJob {
 	private $dispatcher;
 	/** @var ILogger */
 	private $logger;
-	private $connection;
 
 	/** Amount of users that should get scanned per execution */
 	public const USERS_PER_SESSION = 500;
 
 	/**
-	 * @param IConfig $config
-	 * @param IUserManager $userManager
-	 * @param IEventDispatcher $dispatcher
-	 * @param ILogger $logger
-	 * @param IDBConnection $connection
+	 * @param IConfig|null $config
+	 * @param IUserManager|null $userManager
+	 * @param IEventDispatcher|null $dispatcher
+	 * @param ILogger|null $logger
 	 */
-	public function __construct(
-		IConfig $config,
-		IUserManager $userManager,
-		IEventDispatcher $dispatcher,
-		ILogger $logger,
-		IDBConnection $connection
-	) {
+	public function __construct(IConfig $config = null,
+								IUserManager $userManager = null,
+								IEventDispatcher $dispatcher = null,
+								ILogger $logger = null) {
 		// Run once per 10 minutes
 		$this->setInterval(60 * 10);
 
-		$this->config = $config;
-		$this->userManager = $userManager;
-		$this->dispatcher = $dispatcher;
-		$this->logger = $logger;
-		$this->connection = $connection;
+		$this->config = $config ?? \OC::$server->getConfig();
+		$this->userManager = $userManager ?? \OC::$server->getUserManager();
+		$this->dispatcher = $dispatcher ?? \OC::$server->query(IEventDispatcher::class);
+		$this->logger = $logger ?? \OC::$server->getLogger();
 	}
 
 	/**
-	 * @param string $user
+	 * @param IUser $user
 	 */
-	protected function runScanner(string $user) {
+	protected function runScanner(IUser $user) {
 		try {
 			$scanner = new Scanner(
-					$user,
+					$user->getUID(),
 					null,
 					$this->dispatcher,
 					$this->logger
@@ -95,23 +88,6 @@ class ScanFiles extends \OC\BackgroundJob\TimedJob {
 	}
 
 	/**
-	 * Find all storages which have unindexed files and return a user for each
-	 *
-	 * @return string[]
-	 */
-	private function getUsersToScan(): array {
-		$query = $this->connection->getQueryBuilder();
-		$query->select($query->func()->max('user_id'))
-			->from('filecache', 'f')
-			->innerJoin('f', 'mounts', 'm', $query->expr()->eq('storage_id', 'storage'))
-			->where($query->expr()->lt('size', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)))
-			->groupBy('storage_id')
-			->setMaxResults(self::USERS_PER_SESSION);
-
-		return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
-	}
-
-	/**
 	 * @param $argument
 	 * @throws \Exception
 	 */
@@ -120,7 +96,16 @@ class ScanFiles extends \OC\BackgroundJob\TimedJob {
 			return;
 		}
 
-		$users = $this->getUsersToScan();
+		$offset = $this->config->getAppValue('files', 'cronjob_scan_files', 0);
+		$users = $this->userManager->search('', self::USERS_PER_SESSION, $offset);
+		if (!count($users)) {
+			// No users found, reset offset and retry
+			$offset = 0;
+			$users = $this->userManager->search('', self::USERS_PER_SESSION);
+		}
+
+		$offset += self::USERS_PER_SESSION;
+		$this->config->setAppValue('files', 'cronjob_scan_files', $offset);
 
 		foreach ($users as $user) {
 			$this->runScanner($user);

@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2020 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
- * @author Robin Appelman <robin@icewind.nl>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -28,7 +27,7 @@ declare(strict_types=1);
 namespace OC\Core\Migrations;
 
 use Closure;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Type;
 use OCP\DB\ISchemaWrapper;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
@@ -55,20 +54,20 @@ class Version20000Date20201109081918 extends SimpleMigrationStep {
 
 		if (!$schema->hasTable('storages_credentials')) {
 			$table = $schema->createTable('storages_credentials');
-			$table->addColumn('id', Types::BIGINT, [
+			$table->addColumn('id', Type::BIGINT, [
 				'autoincrement' => true,
 				'notnull' => true,
 				'length' => 64,
 			]);
-			$table->addColumn('user', Types::STRING, [
+			$table->addColumn('user', Type::STRING, [
 				'notnull' => false,
 				'length' => 64,
 			]);
-			$table->addColumn('identifier', Types::STRING, [
+			$table->addColumn('identifier', Type::STRING, [
 				'notnull' => true,
 				'length' => 64,
 			]);
-			$table->addColumn('credentials', Types::TEXT, [
+			$table->addColumn('credentials', Type::TEXT, [
 				'notnull' => false,
 			]);
 			$table->setPrimaryKey(['id']);

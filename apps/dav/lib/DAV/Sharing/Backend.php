@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
@@ -195,13 +194,12 @@ class Backend {
 			->from('dav_shares')
 			->where($query->expr()->eq('resourceid', $query->createNamedParameter($resourceId)))
 			->andWhere($query->expr()->eq('type', $query->createNamedParameter($this->resourceType)))
-			->groupBy(['principaluri', 'access'])
 			->execute();
 
 		$shares = [];
 		while ($row = $result->fetch()) {
 			$p = $this->principalBackend->getPrincipalByPath($row['principaluri']);
-			$shares[] = [
+			$shares[]= [
 				'href' => "principal:${row['principaluri']}",
 				'commonName' => isset($p['{DAV:}displayname']) ? $p['{DAV:}displayname'] : '',
 				'status' => 1,

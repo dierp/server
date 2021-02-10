@@ -119,11 +119,6 @@
 
 			var lastPos;
 			var checkInput = function () {
-				// Special handling for the setup template directory
-				if ($target.attr('data-action') === 'template-init') {
-					return true;
-				}
-
 				var filename = $input.val();
 				try {
 					if (!Files.isFileNameValid(filename)) {
@@ -203,21 +198,7 @@
 				iconClass: actionSpec.iconClass,
 				fileType: actionSpec.fileType,
 				actionHandler: actionSpec.actionHandler,
-				checkFilename: actionSpec.checkFilename
-			});
-		},
-
-		/**
-		 * Remove a menu item from the "New" file menu
-		 * @param {string} actionId
-		 */
-		removeMenuEntry: function(actionId) {
-			var index = this._menuItems.findIndex(function (actionSpec) {
-				return actionSpec.id === actionId;
-			});
-			if (index > -1) {
-				this._menuItems.splice(index, 1);
-			}
+		        });
 		},
 
 		/**

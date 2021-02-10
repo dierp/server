@@ -28,8 +28,6 @@ namespace OCA\User_LDAP\User;
 use OCA\User_LDAP\Mapping\UserMapping;
 use OCP\IConfig;
 use OCP\IDBConnection;
-use OCP\Share\IManager;
-use OCP\Share\IShare;
 
 class OfflineUser {
 	/**
@@ -80,19 +78,18 @@ class OfflineUser {
 	 * @var \OCA\User_LDAP\Mapping\UserMapping
 	 */
 	protected $mapping;
-	/** @var IManager */
-	private $shareManager;
 
-	public function __construct(
-		$ocName,
-		IConfig $config,
-		UserMapping $mapping,
-		IManager $shareManager
-	) {
+	/**
+	 * @param string $ocName
+	 * @param IConfig $config
+	 * @param IDBConnection $db
+	 * @param \OCA\User_LDAP\Mapping\UserMapping $mapping
+	 */
+	public function __construct($ocName, IConfig $config, IDBConnection $db, UserMapping $mapping) {
 		$this->ocName = $ocName;
 		$this->config = $config;
+		$this->db = $db;
 		$this->mapping = $mapping;
-		$this->shareManager = $shareManager;
 	}
 
 	/**
@@ -222,12 +219,12 @@ class OfflineUser {
 	 */
 	protected function fetchDetails() {
 		$properties = [
-			'displayName' => 'user_ldap',
-			'uid' => 'user_ldap',
-			'homePath' => 'user_ldap',
+			'displayName'  => 'user_ldap',
+			'uid'          => 'user_ldap',
+			'homePath'     => 'user_ldap',
 			'foundDeleted' => 'user_ldap',
-			'email' => 'settings',
-			'lastLogin' => 'login',
+			'email'        => 'settings',
+			'lastLogin'    => 'login',
 		];
 		foreach ($properties as $property => $app) {
 			$this->$property = $this->config->getUserValue($this->ocName, $app, $property, '');
@@ -239,33 +236,29 @@ class OfflineUser {
 		$this->determineShares();
 	}
 
+
 	/**
 	 * finds out whether the user has active shares. The result is stored in
 	 * $this->hasActiveShares
 	 */
 	protected function determineShares() {
-		$shareInterface = new \ReflectionClass(IShare::class);
-		$shareConstants = $shareInterface->getConstants();
-
-		foreach ($shareConstants as $constantName => $constantValue) {
-			if (strpos($constantName, 'TYPE_') !== 0
-				|| $constantValue === IShare::TYPE_USERGROUP
-			) {
-				continue;
-			}
-			$shares = $this->shareManager->getSharesBy(
-				$this->ocName,
-				$constantValue,
-				null,
-				false,
-				1
-			);
-			if (!empty($shares)) {
-				$this->hasActiveShares = true;
-				return;
-			}
+		$query = $this->db->prepare('
+			SELECT `uid_owner`
+			FROM `*PREFIX*share`
+			WHERE `uid_owner` = ?
+		', 1);
+		$query->execute([$this->ocName]);
+		if ($query->rowCount() > 0) {
+			$this->hasActiveShares = true;
+			return;
 		}
 
-		$this->hasActiveShares = false;
+		$query = $this->db->prepare('
+			SELECT `owner`
+			FROM `*PREFIX*share_external`
+			WHERE `owner` = ?
+		', 1);
+		$query->execute([$this->ocName]);
+		$this->hasActiveShares = $query->rowCount() > 0;
 	}
 }

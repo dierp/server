@@ -6,7 +6,7 @@
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Morris Jobke <hey@morrisjobke.de>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *

@@ -7,7 +7,6 @@
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Calviño Sánchez <danxuliu@gmail.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  *
  * @license AGPL-3.0
@@ -71,11 +70,6 @@ class Constants {
 	 */
 	public const SHARE_TYPE_ROOM = 10;
 	// const SHARE_TYPE_USERROOM = 11; // Internal type used by RoomShareProvider
-	/**
-	 * @deprecated 21.0.0 - use IShare::TYPE_DECK instead
-	 */
-	public const SHARE_TYPE_DECK = 12;
-	// const SHARE_TYPE_DECK_USER = 13; // Internal type used by DeckShareProvider
 
 	public const FORMAT_NONE = -1;
 	public const FORMAT_STATUSES = -2;

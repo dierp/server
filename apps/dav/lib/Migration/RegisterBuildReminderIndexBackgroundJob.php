@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright 2019 Georg Ehrke <oc.list@georgehrke.com>
  *
  * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -88,7 +87,7 @@ class RegisterBuildReminderIndexBackgroundJob implements IRepairStep {
 		$query->select($query->createFunction('MAX(' . $query->getColumnName('id') . ')'))
 			->from('calendarobjects');
 		$result = $query->execute();
-		$maxId = (int) $result->fetchOne();
+		$maxId = (int) $result->fetchColumn();
 		$result->closeCursor();
 
 		$output->info('Add background job');

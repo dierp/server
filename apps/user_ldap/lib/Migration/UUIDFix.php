@@ -50,4 +50,11 @@ abstract class UUIDFix extends QueuedJob {
 			}
 		}
 	}
+
+	/**
+	 * @param Proxy $proxy
+	 */
+	public function overrideProxy(Proxy $proxy) {
+		$this->proxy = $proxy;
+	}
 }

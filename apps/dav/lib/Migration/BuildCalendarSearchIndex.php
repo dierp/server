@@ -3,7 +3,6 @@
  * @copyright 2017 Georg Ehrke <oc.list@georgehrke.com>
  *
  * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -77,7 +76,7 @@ class BuildCalendarSearchIndex implements IRepairStep {
 		$query->select($query->createFunction('MAX(' . $query->getColumnName('id') . ')'))
 			->from('calendarobjects');
 		$result = $query->execute();
-		$maxId = (int) $result->fetchOne();
+		$maxId = (int) $result->fetchColumn();
 		$result->closeCursor();
 
 		$output->info('Add background job');

@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -54,10 +53,4 @@ interface IProviderFactory {
 	 * @since 11.0.0
 	 */
 	public function getAllProviders();
-
-	/**
-	 * @since 21.0.0
-	 * @param string $shareProvier
-	 */
-	public function registerProvider(string $shareProvier): void;
 }

@@ -7,7 +7,6 @@ declare(strict_types=1);
  *
  * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Mario Danic <mario@lovelyhq.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
@@ -33,7 +32,6 @@ declare(strict_types=1);
 
 namespace OC\Core\Command\Db;
 
-use OC\DB\Connection;
 use OC\DB\SchemaWrapper;
 use OCP\IDBConnection;
 use Symfony\Component\Console\Command\Command;
@@ -52,13 +50,13 @@ use Symfony\Component\EventDispatcher\GenericEvent;
  */
 class AddMissingIndices extends Command {
 
-	/** @var Connection */
+	/** @var IDBConnection */
 	private $connection;
 
 	/** @var EventDispatcherInterface */
 	private $dispatcher;
 
-	public function __construct(Connection $connection, EventDispatcherInterface $dispatcher) {
+	public function __construct(IDBConnection $connection, EventDispatcherInterface $dispatcher) {
 		parent::__construct();
 
 		$this->connection = $connection;
@@ -133,13 +131,6 @@ class AddMissingIndices extends Command {
 			if (!$table->hasIndex('fs_mtime')) {
 				$output->writeln('<info>Adding additional mtime index to the filecache table, this can take some time...</info>');
 				$table->addIndex(['mtime'], 'fs_mtime');
-				$this->connection->migrateToSchema($schema->getWrappedSchema());
-				$updated = true;
-				$output->writeln('<info>Filecache table updated successfully.</info>');
-			}
-			if (!$table->hasIndex('fs_size')) {
-				$output->writeln('<info>Adding additional size index to the filecache table, this can take some time...</info>');
-				$table->addIndex(['size'], 'fs_size');
 				$this->connection->migrateToSchema($schema->getWrappedSchema());
 				$updated = true;
 				$output->writeln('<info>Filecache table updated successfully.</info>');

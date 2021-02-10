@@ -14,7 +14,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -36,9 +36,6 @@ namespace OC;
 
 use OC\App\AppStore\Bundles\BundleFetcher;
 use OC\Avatar\AvatarManager;
-use OC\DB\Connection;
-use OC\DB\ConnectionAdapter;
-use OC\Repair\AddBruteForceCleanupJob;
 use OC\Repair\AddCleanupUpdaterBackupsJob;
 use OC\Repair\CleanTags;
 use OC\Repair\ClearFrontendCaches;
@@ -59,13 +56,10 @@ use OC\Repair\NC18\ResetGeneratedAvatarFlag;
 use OC\Repair\NC20\EncryptionLegacyCipher;
 use OC\Repair\NC20\EncryptionMigration;
 use OC\Repair\NC20\ShippedDashboardEnable;
-use OC\Repair\NC21\AddCheckForUserCertificatesJob;
-use OC\Repair\NC21\ValidatePhoneNumber;
 use OC\Repair\OldGroupMembershipShares;
 use OC\Repair\Owncloud\DropAccountTermsTable;
 use OC\Repair\Owncloud\SaveAccountsTableData;
 use OC\Repair\RemoveLinkShares;
-use OC\Repair\RepairDavShares;
 use OC\Repair\RepairInvalidShares;
 use OC\Repair\RepairMimeTypes;
 use OC\Repair\SqliteAutoincrement;
@@ -98,7 +92,7 @@ class Repair implements IOutput {
 	 */
 	public function __construct(array $repairSteps, EventDispatcherInterface $dispatcher) {
 		$this->repairSteps = $repairSteps;
-		$this->dispatcher = $dispatcher;
+		$this->dispatcher  = $dispatcher;
 	}
 
 	/**
@@ -188,9 +182,6 @@ class Repair implements IOutput {
 			\OC::$server->query(EncryptionLegacyCipher::class),
 			\OC::$server->query(EncryptionMigration::class),
 			\OC::$server->get(ShippedDashboardEnable::class),
-			\OC::$server->get(AddBruteForceCleanupJob::class),
-			\OC::$server->get(AddCheckForUserCertificatesJob::class),
-			\OC::$server->get(RepairDavShares::class)
 		];
 	}
 
@@ -202,8 +193,7 @@ class Repair implements IOutput {
 	 */
 	public static function getExpensiveRepairSteps() {
 		return [
-			new OldGroupMembershipShares(\OC::$server->getDatabaseConnection(), \OC::$server->getGroupManager()),
-			\OC::$server->get(ValidatePhoneNumber::class),
+			new OldGroupMembershipShares(\OC::$server->getDatabaseConnection(), \OC::$server->getGroupManager())
 		];
 	}
 
@@ -214,16 +204,13 @@ class Repair implements IOutput {
 	 * @return IRepairStep[]
 	 */
 	public static function getBeforeUpgradeRepairSteps() {
-		/** @var Connection $connection */
-		$connection = \OC::$server->get(Connection::class);
-		/** @var ConnectionAdapter $connectionAdapter */
-		$connectionAdapter = \OC::$server->get(ConnectionAdapter::class);
-		$config = \OC::$server->getConfig();
-		$steps = [
-			new Collation(\OC::$server->getConfig(), \OC::$server->getLogger(), $connectionAdapter, true),
+		$connection = \OC::$server->getDatabaseConnection();
+		$config     = \OC::$server->getConfig();
+		$steps      = [
+			new Collation(\OC::$server->getConfig(), \OC::$server->getLogger(), $connection, true),
 			new SqliteAutoincrement($connection),
-			new SaveAccountsTableData($connectionAdapter, $config),
-			new DropAccountTermsTable($connectionAdapter),
+			new SaveAccountsTableData($connection, $config),
+			new DropAccountTermsTable($connection)
 		];
 
 		return $steps;

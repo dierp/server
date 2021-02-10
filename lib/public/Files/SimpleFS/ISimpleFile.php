@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2016 Roeland Jago Douma <roeland@famdouma.nl>
  *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -115,7 +114,7 @@ interface ISimpleFile {
 	/**
 	 * Open the file as stream for writing, resulting resource can be operated as stream like the result from php's own fopen
 	 *
-	 * @return resource|bool
+	 * @return resource
 	 * @throws \OCP\Files\NotPermittedException
 	 * @since 14.0.0
 	 */

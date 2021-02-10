@@ -19,7 +19,7 @@
  * @author Pauli Järvinen <pauli.jarvinen@gmail.com>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -248,7 +248,6 @@ class Manager implements IManager {
 				throw new \InvalidArgumentException('SharedWith is not a valid circle');
 			}
 		} elseif ($share->getShareType() === IShare::TYPE_ROOM) {
-		} elseif ($share->getShareType() === IShare::TYPE_DECK) {
 		} else {
 			// We can't handle other types yet
 			throw new \InvalidArgumentException('unknown share type');
@@ -542,8 +541,7 @@ class Manager implements IManager {
 					$this->groupManager->getUserGroupIds($sharedWith)
 			);
 			if (empty($groups)) {
-				$message_t = $this->l->t('Sharing is only allowed with group members');
-				throw new \Exception($message_t);
+				throw new \Exception('Sharing is only allowed with group members');
 			}
 		}
 
@@ -1139,7 +1137,6 @@ class Manager implements IManager {
 			$deletedShares = array_merge($deletedShares, $deletedChildren);
 
 			$provider->delete($child);
-			$this->dispatcher->dispatchTyped(new Share\Events\ShareDeletedEvent($child));
 			$deletedShares[] = $child;
 		}
 
@@ -1169,8 +1166,6 @@ class Manager implements IManager {
 		// Do the actual delete
 		$provider = $this->factory->getProviderForType($share->getShareType());
 		$provider->delete($share);
-
-		$this->dispatcher->dispatchTyped(new Share\Events\ShareDeletedEvent($share));
 
 		// All the deleted shares caused by this delete
 		$deletedShares[] = $share;
@@ -1399,7 +1394,7 @@ class Manager implements IManager {
 	 *
 	 * @return Share[]
 	 */
-	public function getSharesByPath(\OCP\Files\Node $path, $page = 0, $perPage = 50) {
+	public function getSharesByPath(\OCP\Files\Node $path, $page=0, $perPage=50) {
 		return [];
 	}
 
@@ -1890,10 +1885,6 @@ class Manager implements IManager {
 		}
 
 		return true;
-	}
-
-	public function registerShareProvider(string $shareProviderClass): void {
-		$this->factory->registerProvider($shareProviderClass);
 	}
 
 	public function getAllShares(): iterable {

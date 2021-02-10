@@ -19,7 +19,7 @@
  * @author Semih Serhat Karakaya <karakayasemi@itu.edu.tr>
  * @author Stefan Schneider <stefan.schneider@squareweave.com.au>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -494,7 +494,7 @@ class File extends Node implements IFile {
 	}
 
 	/**
-	 * @return array|bool
+	 * @return array|false
 	 */
 	public function getDirectDownload() {
 		if (\OCP\App::isEnabled('encryption')) {

@@ -22,7 +22,7 @@ declare(strict_types=1);
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -387,13 +387,14 @@ interface IServerContainer extends ContainerInterface, IContainer {
 	public function getSearch();
 
 	/**
-	 * Get the certificate manager
+	 * Get the certificate manager for the user
 	 *
-	 * @return \OCP\ICertificateManager
+	 * @param string $userId (optional) if not specified the current loggedin user is used, use null to get the system certificate manager
+	 * @return \OCP\ICertificateManager | null if $userId is null and no user is logged in
 	 * @since 8.0.0
 	 * @deprecated 20.0.0 have it injected or fetch it through \Psr\Container\ContainerInterface::get
 	 */
-	public function getCertificateManager();
+	public function getCertificateManager($userId = null);
 
 	/**
 	 * Create a new event source

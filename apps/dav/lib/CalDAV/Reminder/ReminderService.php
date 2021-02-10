@@ -335,10 +335,10 @@ class ReminderService {
 	 */
 	private function getRemindersForVAlarm(VAlarm $valarm,
 										   array $objectData,
-										   string $eventHash = null,
-										   string $alarmHash = null,
-										   bool $isRecurring = false,
-										   bool $isRecurrenceException = false):array {
+										   string $eventHash=null,
+										   string $alarmHash=null,
+										   bool $isRecurring=false,
+										   bool $isRecurrenceException=false):array {
 		if ($eventHash === null) {
 			$eventHash = $this->getEventHash($valarm->parent);
 		}

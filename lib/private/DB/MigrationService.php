@@ -6,7 +6,6 @@
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  *
@@ -28,9 +27,8 @@
 
 namespace OC\DB;
 
-use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSQL94Platform;
+use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaException;
@@ -42,6 +40,7 @@ use OC\IntegrityCheck\Helpers\AppLocator;
 use OC\Migration\SimpleOutput;
 use OCP\AppFramework\App;
 use OCP\AppFramework\QueryException;
+use OCP\IDBConnection;
 use OCP\Migration\IMigrationStep;
 use OCP\Migration\IOutput;
 
@@ -64,12 +63,12 @@ class MigrationService {
 	 * MigrationService constructor.
 	 *
 	 * @param $appName
-	 * @param Connection $connection
+	 * @param IDBConnection $connection
 	 * @param AppLocator $appLocator
 	 * @param IOutput|null $output
 	 * @throws \Exception
 	 */
-	public function __construct($appName, Connection $connection, IOutput $output = null, AppLocator $appLocator = null) {
+	public function __construct($appName, IDBConnection $connection, IOutput $output = null, AppLocator $appLocator = null) {
 		$this->appName = $appName;
 		$this->connection = $connection;
 		$this->output = $output;
@@ -414,57 +413,10 @@ class MigrationService {
 	 * @throws \InvalidArgumentException
 	 */
 	public function migrate($to = 'latest', $schemaOnly = false) {
-		if ($schemaOnly) {
-			$this->migrateSchemaOnly($to);
-			return;
-		}
-
 		// read known migrations
 		$toBeExecuted = $this->getMigrationsToExecute($to);
 		foreach ($toBeExecuted as $version) {
-			try {
-				$this->executeStep($version, $schemaOnly);
-			} catch (DriverException $e) {
-				// The exception itself does not contain the name of the migration,
-				// so we wrap it here, to make debugging easier.
-				throw new \Exception('Database error when running migration ' . $to . ' for app ' . $this->getApp(), 0, $e);
-			}
-		}
-	}
-
-	/**
-	 * Applies all not yet applied versions up to $to
-	 *
-	 * @param string $to
-	 * @throws \InvalidArgumentException
-	 */
-	public function migrateSchemaOnly($to = 'latest') {
-		// read known migrations
-		$toBeExecuted = $this->getMigrationsToExecute($to);
-
-		if (empty($toBeExecuted)) {
-			return;
-		}
-
-		$toSchema = null;
-		foreach ($toBeExecuted as $version) {
-			$instance = $this->createInstance($version);
-
-			$toSchema = $instance->changeSchema($this->output, function () use ($toSchema) {
-				return $toSchema ?: new SchemaWrapper($this->connection);
-			}, ['tablePrefix' => $this->connection->getPrefix()]) ?: $toSchema;
-
-			$this->markAsExecuted($version);
-		}
-
-		if ($toSchema instanceof SchemaWrapper) {
-			$targetSchema = $toSchema->getWrappedSchema();
-			if ($this->checkOracle) {
-				$beforeSchema = $this->connection->createSchema();
-				$this->ensureOracleIdentifierLengthLimit($beforeSchema, $targetSchema, strlen($this->connection->getPrefix()));
-			}
-			$this->connection->migrateToSchema($targetSchema);
-			$toSchema->performDropTableCalls();
+			$this->executeStep($version, $schemaOnly);
 		}
 	}
 
@@ -590,7 +542,7 @@ class MigrationService {
 				$indexName = strtolower($primaryKey->getName());
 				$isUsingDefaultName = $indexName === 'primary';
 
-				if ($this->connection->getDatabasePlatform() instanceof PostgreSQL94Platform) {
+				if ($this->connection->getDatabasePlatform() instanceof PostgreSqlPlatform) {
 					$defaultName = $table->getName() . '_pkey';
 					$isUsingDefaultName = strtolower($defaultName) === $indexName;
 

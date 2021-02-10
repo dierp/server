@@ -410,7 +410,7 @@ class Database extends ABackend implements
 		}
 
 		$result = $query->execute();
-		$count = $result->fetchOne();
+		$count = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($count !== false) {
@@ -442,7 +442,7 @@ class Database extends ABackend implements
 			->andWhere($query->expr()->eq('gid', $query->createNamedParameter($gid), IQueryBuilder::PARAM_STR));
 
 		$result = $query->execute();
-		$count = $result->fetchOne();
+		$count = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($count !== false) {
@@ -467,7 +467,7 @@ class Database extends ABackend implements
 			->where($query->expr()->eq('gid', $query->createNamedParameter($gid)));
 
 		$result = $query->execute();
-		$displayName = $result->fetchOne();
+		$displayName = $result->fetchColumn();
 		$result->closeCursor();
 
 		return (string) $displayName;

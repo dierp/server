@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2018 Julius Härtl <jus@bitgrid.net>
  *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -43,7 +42,7 @@ class Overview implements ISettings {
 	 */
 	public function getForm() {
 		$parameters = [
-			'checkForWorkingWellKnownSetup' => $this->config->getSystemValue('check_for_working_wellknown_setup', true),
+			'checkForWorkingWellKnownSetup'    => $this->config->getSystemValue('check_for_working_wellknown_setup', true),
 		];
 
 		return new TemplateResponse('settings', 'settings/admin/overview', $parameters, '');

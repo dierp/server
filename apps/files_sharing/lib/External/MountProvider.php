@@ -4,7 +4,6 @@
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  *
  * @license AGPL-3.0
@@ -67,7 +66,7 @@ class MountProvider implements IMountProvider {
 		$mountPoint = '/' . $user->getUID() . '/files/' . ltrim($data['mountpoint'], '/');
 		$data['mountpoint'] = $mountPoint;
 		$data['cloudId'] = $this->cloudIdManager->getCloudId($data['owner'], $data['remote']);
-		$data['certificateManager'] = \OC::$server->getCertificateManager();
+		$data['certificateManager'] = \OC::$server->getCertificateManager($user->getUID());
 		$data['HttpClientService'] = \OC::$server->getHTTPClientService();
 		return new Mount(self::STORAGE, $mountPoint, $data, $manager, $storageFactory);
 	}

@@ -2,7 +2,7 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud GmbH.
  *
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *

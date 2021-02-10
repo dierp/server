@@ -26,10 +26,7 @@
 
 namespace OC\DB;
 
-use Doctrine\DBAL\Schema\AbstractAsset;
 use OCP\IConfig;
-use function preg_match;
-use function preg_quote;
 
 /**
  * Various PostgreSQL specific helper functions.
@@ -53,30 +50,20 @@ class PgSqlTools {
 	 * @return null
 	 */
 	public function resynchronizeDatabaseSequences(Connection $conn) {
+		$filterExpression = '/^' . preg_quote($this->config->getSystemValue('dbtableprefix', 'oc_')) . '/';
 		$databaseName = $conn->getDatabase();
-		$conn->getConfiguration()->setSchemaAssetsFilter(function ($asset) {
-			/** @var string|AbstractAsset $asset */
-			$filterExpression = '/^' . preg_quote($this->config->getSystemValue('dbtableprefix', 'oc_')) . '/';
-			if ($asset instanceof AbstractAsset) {
-				return preg_match($filterExpression, $asset->getName()) !== false;
-			}
-			return preg_match($filterExpression, $asset) !== false;
-		});
+		$conn->getConfiguration()->setFilterSchemaAssetsExpression($filterExpression);
 
 		foreach ($conn->getSchemaManager()->listSequences() as $sequence) {
 			$sequenceName = $sequence->getName();
 			$sqlInfo = 'SELECT table_schema, table_name, column_name
 				FROM information_schema.columns
 				WHERE column_default = ? AND table_catalog = ?';
-			$result = $conn->executeQuery($sqlInfo, [
+			$sequenceInfo = $conn->fetchAssoc($sqlInfo, [
 				"nextval('$sequenceName'::regclass)",
 				$databaseName
 			]);
-			$sequenceInfo = $result->fetchAssociative();
-			$result->free();
-			/** @var string $tableName */
 			$tableName = $sequenceInfo['table_name'];
-			/** @var string $columnName */
 			$columnName = $sequenceInfo['column_name'];
 			$sqlMaxId = "SELECT MAX($columnName) FROM $tableName";
 			$sqlSetval = "SELECT setval('$sequenceName', ($sqlMaxId))";

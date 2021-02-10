@@ -5,6 +5,7 @@
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Individual IT Services <info@individual-it.net>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Ole Ostergaard <ole.c.ostergaard@gmail.com>
  * @author Robin Appelman <robin@icewind.nl>
@@ -159,7 +160,7 @@ class DBLockingProvider extends AbstractLockingProvider {
 		}
 		$query = $this->connection->prepare('SELECT `lock` from `*PREFIX*file_locks` WHERE `key` = ?');
 		$query->execute([$path]);
-		$lockValue = (int)$query->fetchOne();
+		$lockValue = (int)$query->fetchColumn();
 		if ($type === self::LOCK_SHARED) {
 			if ($this->isLocallyLocked($path)) {
 				// if we have a shared lock we kept open locally but it's released we always have at least 1 shared lock in the db

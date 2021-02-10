@@ -22,9 +22,9 @@
 
 namespace OC\Core\Command\Db\Migrations;
 
-use OC\DB\Connection;
 use OC\DB\MigrationService;
 use OC\Migration\ConsoleOutput;
+use OCP\IDBConnection;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Command\Command;
@@ -34,13 +34,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class MigrateCommand extends Command implements CompletionAwareInterface {
 
-	/** @var Connection */
+	/** @var IDBConnection */
 	private $connection;
 
 	/**
-	 * @param Connection $connection
+	 * @param IDBConnection $connection
 	 */
-	public function __construct(Connection $connection) {
+	public function __construct(IDBConnection $connection) {
 		$this->connection = $connection;
 		parent::__construct();
 	}

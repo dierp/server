@@ -43,7 +43,7 @@ class CookieHelper {
 		$header = sprintf(
 			'Set-Cookie: %s=%s',
 			$name,
-			rawurlencode($value)
+			urlencode($value)
 		);
 
 		if ($path !== '') {

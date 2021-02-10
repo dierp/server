@@ -4,7 +4,6 @@
  *
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  * @author onehappycat <one.happy.cat@gmx.com>
  * @author Robin Appelman <robin@icewind.nl>
  *
@@ -69,14 +68,14 @@ class Search implements ISearch {
 			foreach ($this->pluginList[$type] as $plugin) {
 				/** @var ISearchPlugin $searchPlugin */
 				$searchPlugin = $this->c->resolve($plugin);
-				$hasMoreResults = $searchPlugin->search($search, $limit, $offset, $searchResult) || $hasMoreResults;
+				$hasMoreResults |= $searchPlugin->search($search, $limit, $offset, $searchResult);
 			}
 		}
 
 		// Get from lookup server, not a separate share type
 		if ($lookup) {
 			$searchPlugin = $this->c->resolve(LookupPlugin::class);
-			$hasMoreResults = $searchPlugin->search($search, $limit, $offset, $searchResult) || $hasMoreResults;
+			$hasMoreResults |= $searchPlugin->search($search, $limit, $offset, $searchResult);
 		}
 
 		// sanitizing, could go into the plugins as well
@@ -100,7 +99,7 @@ class Search implements ISearch {
 			$searchResult->unsetResult($emailType);
 		}
 
-		return [$searchResult->asArray(), $hasMoreResults];
+		return [$searchResult->asArray(), (bool)$hasMoreResults];
 	}
 
 	public function registerPlugin(array $pluginInfo) {

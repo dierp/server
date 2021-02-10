@@ -73,25 +73,25 @@ class StatusController extends Controller {
 		switch ($this->session->getStatus()) {
 			case Session::INIT_EXECUTED:
 				$status = 'interactionNeeded';
-				$message = $this->l->t(
+				$message = (string)$this->l->t(
 					'Invalid private key for encryption app. Please update your private key password in your personal settings to recover access to your encrypted files.'
 				);
 				break;
 			case Session::NOT_INITIALIZED:
 				$status = 'interactionNeeded';
 				if ($this->encryptionManager->isEnabled()) {
-					$message = $this->l->t(
+					$message = (string)$this->l->t(
 						'Encryption App is enabled, but your keys are not initialized. Please log-out and log-in again.'
 					);
 				} else {
-					$message = $this->l->t(
+					$message = (string)$this->l->t(
 						'Please enable server side encryption in the admin settings in order to use the encryption module.'
 					);
 				}
 				break;
 			case Session::INIT_SUCCESSFUL:
 				$status = 'success';
-				$message = $this->l->t('Encryption app is enabled and ready');
+				$message = (string)$this->l->t('Encryption app is enabled and ready');
 		}
 
 		return new DataResponse(

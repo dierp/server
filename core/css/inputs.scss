@@ -172,7 +172,7 @@ button, .button,
 input[type='button'],
 input[type='submit'],
 input[type='reset'] {
-	padding: 6px 16px;
+	padding: 6px 12px;
 	width: auto;
 	min-height: $default-height;
 	cursor: pointer;
@@ -885,7 +885,7 @@ div.select2-container {
 }
 
 /* Progressbar */
-progress:not(.vue) {
+progress {
 	display: block;
 	width: 100%;
 	padding: 0;
@@ -948,8 +948,8 @@ progress:not(.vue) {
 // Same as .hidden-visually
 label.infield {
 	position: absolute;
-	left: -10000px;
-	top: -10000px;
+	left:-10000px;
+	top: auto;
 	width: 1px;
 	height: 1px;
 	overflow: hidden;

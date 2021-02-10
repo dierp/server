@@ -5,7 +5,6 @@
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,6 +26,7 @@
 namespace OC\Command;
 
 use OCP\Command\ICommand;
+use SuperClosure\Serializer;
 
 class CronBus extends AsyncBus {
 	/**
@@ -68,9 +68,10 @@ class CronBus extends AsyncBus {
 	 */
 	private function serializeCommand($command) {
 		if ($command instanceof \Closure) {
-			return \Opis\Closure\serialize($command);
+			$serializer = new Serializer();
+			return $serializer->serialize($command);
 		} elseif (is_callable($command) or $command instanceof ICommand) {
-			return \Opis\Closure\serialize($command);
+			return serialize($command);
 		} else {
 			throw new \InvalidArgumentException('Invalid command');
 		}

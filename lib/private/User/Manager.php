@@ -45,7 +45,7 @@ use OCP\IUserBackend;
 use OCP\IUserManager;
 use OCP\Support\Subscription\IRegistry;
 use OCP\User\Backend\IGetRealUIDBackend;
-use OCP\User\Events\BeforeUserCreatedEvent;
+use OCP\User\Events\CreateUserEvent;
 use OCP\User\Events\UserCreatedEvent;
 use OCP\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -231,20 +231,6 @@ class Manager extends PublicEmitter implements IUserManager {
 			}
 		}
 
-		// since http basic auth doesn't provide a standard way of handling non ascii password we allow password to be urlencoded
-		// we only do this decoding after using the plain password fails to maintain compatibility with any password that happens
-		// to contains urlencoded patterns by "accident".
-		$password = urldecode($password);
-
-		foreach ($this->backends as $backend) {
-			if ($backend->implementsActions(Backend::CHECK_PASSWORD)) {
-				$uid = $backend->checkPassword($loginName, $password);
-				if ($uid !== false) {
-					return $this->getUserObject($uid, $backend);
-				}
-			}
-		}
-
 		return false;
 	}
 
@@ -387,16 +373,14 @@ class Manager extends PublicEmitter implements IUserManager {
 			throw new \InvalidArgumentException($l->t('The username is already being used'));
 		}
 
-		/** @deprecated 21.0.0 use BeforeUserCreatedEvent event with the IEventDispatcher instead */
 		$this->emit('\OC\User', 'preCreateUser', [$uid, $password]);
-		$this->eventDispatcher->dispatchTyped(new BeforeUserCreatedEvent($uid, $password));
+		$this->eventDispatcher->dispatchTyped(new CreateUserEvent($uid, $password));
 		$state = $backend->createUser($uid, $password);
 		if ($state === false) {
 			throw new \InvalidArgumentException($l->t('Could not create user'));
 		}
 		$user = $this->getUserObject($uid, $backend);
 		if ($user instanceof IUser) {
-			/** @deprecated 21.0.0 use UserCreatedEvent event with the IEventDispatcher instead */
 			$this->emit('\OC\User', 'postCreateUser', [$user, $password]);
 			$this->eventDispatcher->dispatchTyped(new UserCreatedEvent($user, $password));
 		}
@@ -505,7 +489,7 @@ class Manager extends PublicEmitter implements IUserManager {
 
 
 		$result = $queryBuilder->execute();
-		$count = $result->fetchOne();
+		$count = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($count !== false) {
@@ -535,7 +519,7 @@ class Manager extends PublicEmitter implements IUserManager {
 			->andWhere($queryBuilder->expr()->in('gid', $queryBuilder->createNamedParameter($groups, IQueryBuilder::PARAM_STR_ARRAY)));
 
 		$result = $queryBuilder->execute();
-		$count = $result->fetchOne();
+		$count = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($count !== false) {
@@ -563,7 +547,7 @@ class Manager extends PublicEmitter implements IUserManager {
 
 		$query = $queryBuilder->execute();
 
-		$result = (int)$query->fetchOne();
+		$result = (int)$query->fetchColumn();
 		$query->closeCursor();
 
 		return $result;

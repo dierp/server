@@ -4,7 +4,6 @@
  *
  * @author Andreas Fischer <bantu@owncloud.com>
  * @author Christopher Schäpers <kondou@ts.unde.re>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Frank Karlitschek <frank@karlitschek.de>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
@@ -45,13 +44,13 @@ try {
 	# for description and defaults
 	$defaults = new \OCP\Defaults();
 	$values = [
-		'installed' => $installed,
+		'installed'=>$installed,
 		'maintenance' => $maintenance,
 		'needsDbUpgrade' => \OCP\Util::needUpgrade(),
-		'version' => implode('.', \OCP\Util::getVersion()),
-		'versionstring' => OC_Util::getVersionString(),
-		'edition' => '',
-		'productname' => $defaults->getName(),
+		'version'=>implode('.', \OCP\Util::getVersion()),
+		'versionstring'=>OC_Util::getVersionString(),
+		'edition'=> '',
+		'productname'=>$defaults->getName(),
 		'extendedSupport' => \OCP\Util::hasExtendedSupport()
 	];
 	if (OC::$CLI) {

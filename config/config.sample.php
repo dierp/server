@@ -195,16 +195,6 @@ $CONFIG = [
 'default_locale' => 'en_US',
 
 /**
- * This sets the default region for phone numbers on your Nextcloud server,
- * using ISO 3166-1 country codes such as ``DE`` for Germany, ``FR`` for France, …
- * It is required to allow inserting phone numbers in the user profiles starting
- * without the country code (e.g. +49 for Germany).
- *
- * No default value!
- */
-'default_phone_region' => 'GB',
-
-/**
  * With this setting a locale can be forced for all users. If a locale is
  * forced, the users are also unable to change their locale in the personal
  * settings. If users shall be unable to change their locale, but users have
@@ -316,21 +306,6 @@ $CONFIG = [
  * Defaults to ``core/skeleton`` in the Nextcloud directory.
  */
 'skeletondirectory' => '/path/to/nextcloud/core/skeleton',
-
-
-/**
- * The directory where the template files are located. These files will be
- * copied to the template directory of new users. Leave empty to not copy any
- * template files.
- * ``{lang}`` can be used as a placeholder for the language of the user.
- * If the directory does not exist, it falls back to non dialect (from ``de_DE``
- * to ``de``). If that does not exist either, it falls back to ``default``
- *
- * If this is not set creating a template directory will only happen if no custom
- * ``skeletondirectory`` is defined, otherwise the shipped templates will be used
- * to create a template directory for the user.
- */
-'templatesdirectory' => '/path/to/nextcloud/templates',
 
 /**
  * If your user backend does not allow password resets (e.g. when it's a
@@ -880,16 +855,16 @@ $CONFIG = [
 ],
 
 /**
- * This uses PHP.date formatting; see https://www.php.net/manual/en/function.date.php
+ * This uses PHP.date formatting; see http://php.net/manual/en/function.date.php
  *
  * Defaults to ISO 8601 ``2005-08-15T15:52:01+00:00`` - see \DateTime::ATOM
- * (https://www.php.net/manual/en/class.datetime.php#datetime.constants.atom)
+ * (https://secure.php.net/manual/en/class.datetime.php#datetime.constants.atom)
  */
 'logdateformat' => 'F d, Y H:i:s',
 
 /**
  * The timezone for logfiles. You may change this; see
- * https://www.php.net/manual/en/timezones.php
+ * http://php.net/manual/en/timezones.php
  *
  * Defaults to ``UTC``
  */
@@ -1261,8 +1236,8 @@ $CONFIG = [
  */
 'memcached_servers' => [
 	// hostname, port and optional weight. Also see:
-	// https://www.php.net/manual/en/memcached.addservers.php
-	// https://www.php.net/manual/en/memcached.addserver.php
+	// http://www.php.net/manual/en/memcached.addservers.php
+	// http://www.php.net/manual/en/memcached.addserver.php
 	['localhost', 11211],
 	//array('other.host.local', 11211),
 ],
@@ -1425,17 +1400,10 @@ $CONFIG = [
 'sharing.managerFactory' => '\OC\Share20\ProviderFactory',
 
 /**
- * Define max number of results returned by the search for auto-completion of
- * users, groups, etc. The value must not be lower than 0 (for unlimited).
- *
- * If more, different sources are requested (e.g. different user backends; or
- * both users and groups), the value is applied per source and might not be
- * truncated after collecting the results. I.e. more results can appear than
- * configured here.
- *
- * Default is 25.
+ * Define max number of results returned by the user search for auto-completion
+ * Default is unlimited (value set to 0).
  */
-'sharing.maxAutocompleteResults' => 25,
+'sharing.maxAutocompleteResults' => 0,
 
 /**
  * Define the minimum length of the search string before we start auto-completion
@@ -1633,15 +1601,6 @@ $CONFIG = [
  * Defaults to ``2.0.0``
  */
 'minimum.supported.desktop.version' => '2.0.0',
-
-/**
- * Option to allow local storage to contain symlinks.
- * WARNING: Not recommended. This would make it possible for Nextcloud to access
- * files outside the data directory and could be considered a security risk.
- *
- * Defaults to ``false``
- */
-'localstorage.allowsymlinks' => false,
 
 /**
  * EXPERIMENTAL: option whether to include external storage in quota

@@ -7,7 +7,6 @@ declare(strict_types=1);
  *
  * @author Joas Schilling <coding@schilljs.com>
  * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
- * @author Morris Jobke <hey@morrisjobke.de>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -36,7 +35,7 @@ use OCP\Search\IProvider;
 use OCP\Search\ISearchQuery;
 use OCP\Search\SearchResult;
 use OCP\Search\SearchResultEntry;
-use OCP\Settings\IIconSection;
+use OCP\Settings\ISection;
 use OCP\Settings\IManager;
 
 class SectionSearch implements IProvider {
@@ -118,7 +117,7 @@ class SectionSearch implements IProvider {
 
 	/**
 	 * @param ISearchQuery $query
-	 * @param IIconSection[][] $sections
+	 * @param ISection[][] $sections
 	 * @param string $subline
 	 * @param string $routeName
 	 * @return array
@@ -136,7 +135,10 @@ class SectionSearch implements IProvider {
 
 				/**
 				 * We can't use the icon URL at the moment as they don't invert correctly for dark theme
+				 * $iconUrl = '';
+				 * if ($section instanceof IIconSection) {
 				 * $iconUrl = $section->getIcon();
+				 * }
 				 */
 
 				$result[] = new SearchResultEntry(

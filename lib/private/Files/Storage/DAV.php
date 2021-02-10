@@ -17,8 +17,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Tigran Mkrtchyan <tigran.mkrtchyan@desy.de>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -123,6 +122,9 @@ class DAV extends Common {
 			if ($this->secure === true) {
 				// inject mock for testing
 				$this->certManager = \OC::$server->getCertificateManager();
+				if (is_null($this->certManager)) { //no user
+					$this->certManager = \OC::$server->getCertificateManager(null);
+				}
 			}
 			$this->root = $params['root'] ?? '/';
 			$this->root = '/' . ltrim($this->root, '/');
@@ -487,8 +489,8 @@ class DAV extends Common {
 
 	/**
 	 * @param string $path
-	 * @param mixed $data
-	 * @return int|false
+	 * @param string $data
+	 * @return int
 	 */
 	public function file_put_contents($path, $data) {
 		$path = $this->cleanPath($path);

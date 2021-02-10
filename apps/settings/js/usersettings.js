@@ -24,11 +24,6 @@
 			if (_.isUndefined(data)) {
 				return null;
 			}
-
-			if (data.status && data.status === 'error') {
-				OC.Notification.show(data.data.message, { type: 'error' });
-			}
-
 			if (_.isUndefined(data.data)) {
 				return null;
 			}

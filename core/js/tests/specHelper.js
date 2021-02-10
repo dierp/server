@@ -117,7 +117,6 @@ window.Snap.prototype = {
 };
 
 window.isPhantom = /phantom/i.test(navigator.userAgent);
-document.documentElement.lang = navigator.language;
 
 // global setup for all tests
 (function setupTests() {

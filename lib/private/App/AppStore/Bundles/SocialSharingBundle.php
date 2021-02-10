@@ -29,7 +29,7 @@ class SocialSharingBundle extends Bundle {
 	 * {@inheritDoc}
 	 */
 	public function getName() {
-		return $this->l10n->t('Social sharing bundle');
+		return (string)$this->l10n->t('Social sharing bundle');
 	}
 
 	/**

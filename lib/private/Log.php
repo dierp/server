@@ -39,6 +39,7 @@ namespace OC;
 use Nextcloud\LogNormalizer\Normalizer;
 use OCP\Log\IDataLogger;
 use function array_merge;
+
 use OC\Log\ExceptionSerializer;
 use OCP\ILogger;
 use OCP\Log\IFileBased;

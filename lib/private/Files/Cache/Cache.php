@@ -7,7 +7,6 @@
  * @author Artem Kochnev <MrJeos@gmail.com>
  * @author Björn Schießle <bjoern@schiessle.org>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Florin Peter <github@florin-peter.de>
  * @author Frédéric Fortier <frederic.fortier@oronospolytechnique.com>
  * @author Jens-Christian Fischer <jens-christian.fischer@switch.ch>
@@ -19,7 +18,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -39,14 +38,10 @@
 
 namespace OC\Files\Cache;
 
+use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Files\Cache\CacheEntryInsertedEvent;
-use OCP\Files\Cache\CacheEntryUpdatedEvent;
 use OCP\Files\Cache\CacheInsertEvent;
-use OCP\Files\Cache\CacheEntryRemovedEvent;
 use OCP\Files\Cache\CacheUpdateEvent;
 use OCP\Files\Cache\ICache;
 use OCP\Files\Cache\ICacheEntry;
@@ -96,9 +91,6 @@ class Cache implements ICache {
 	 */
 	protected $connection;
 
-	/**
-	 * @var IEventDispatcher
-	 */
 	protected $eventDispatcher;
 
 	/** @var QuerySearchHelper */
@@ -117,7 +109,7 @@ class Cache implements ICache {
 		$this->storageCache = new Storage($storage);
 		$this->mimetypeLoader = \OC::$server->getMimeTypeLoader();
 		$this->connection = \OC::$server->getDatabaseConnection();
-		$this->eventDispatcher = \OC::$server->get(IEventDispatcher::class);
+		$this->eventDispatcher = \OC::$server->getEventDispatcher();
 		$this->querySearchHelper = new QuerySearchHelper($this->mimetypeLoader);
 	}
 
@@ -292,8 +284,7 @@ class Cache implements ICache {
 		$data['name'] = basename($file);
 
 		[$values, $extensionValues] = $this->normalizeData($data);
-		$storageId = $this->getNumericStorageId();
-		$values['storage'] = $storageId;
+		$values['storage'] = $this->getNumericStorageId();
 
 		try {
 			$builder = $this->connection->getQueryBuilder();
@@ -317,9 +308,7 @@ class Cache implements ICache {
 					$query->execute();
 				}
 
-				$event = new CacheEntryInsertedEvent($this->storage, $file, $fileId, $storageId);
-				$this->eventDispatcher->dispatch(CacheInsertEvent::class, $event);
-				$this->eventDispatcher->dispatchTyped($event);
+				$this->eventDispatcher->dispatch(CacheInsertEvent::class, new CacheInsertEvent($this->storage, $file, $fileId));
 				return $fileId;
 			}
 		} catch (UniqueConstraintViolationException $e) {
@@ -410,9 +399,7 @@ class Cache implements ICache {
 		$path = $this->getPathById($id);
 		// path can still be null if the file doesn't exist
 		if ($path !== null) {
-			$event = new CacheEntryUpdatedEvent($this->storage, $path, $id, $this->getNumericStorageId());
-			$this->eventDispatcher->dispatch(CacheUpdateEvent::class, $event);
-			$this->eventDispatcher->dispatchTyped($event);
+			$this->eventDispatcher->dispatch(CacheUpdateEvent::class, new CacheUpdateEvent($this->storage, $path, $id));
 		}
 	}
 
@@ -486,7 +473,7 @@ class Cache implements ICache {
 			->wherePath($file);
 
 		$result = $query->execute();
-		$id = $result->fetchOne();
+		$id = $result->fetchColumn();
 		$result->closeCursor();
 
 		return $id === false ? -1 : (int)$id;
@@ -549,8 +536,6 @@ class Cache implements ICache {
 			if ($entry->getMimeType() == FileInfo::MIMETYPE_FOLDER) {
 				$this->removeChildren($entry);
 			}
-
-			$this->eventDispatcher->dispatchTyped(new CacheEntryRemovedEvent($this->storage, $entry->getPath(), $entry->getId(), $this->getNumericStorageId()));
 		}
 	}
 
@@ -692,17 +677,6 @@ class Cache implements ICache {
 			$query->execute();
 
 			$this->connection->commit();
-
-			if ($sourceCache->getNumericStorageId() !== $this->getNumericStorageId()) {
-				$this->eventDispatcher->dispatchTyped(new CacheEntryRemovedEvent($this->storage, $sourcePath, $sourceId, $sourceCache->getNumericStorageId()));
-				$event = new CacheEntryInsertedEvent($this->storage, $targetPath, $sourceId, $this->getNumericStorageId());
-				$this->eventDispatcher->dispatch(CacheInsertEvent::class, $event);
-				$this->eventDispatcher->dispatchTyped($event);
-			} else {
-				$event = new CacheEntryUpdatedEvent($this->storage, $targetPath, $sourceId, $this->getNumericStorageId());
-				$this->eventDispatcher->dispatch(CacheUpdateEvent::class, $event);
-				$this->eventDispatcher->dispatchTyped($event);
-			}
 		} else {
 			$this->moveFromCacheFallback($sourceCache, $sourcePath, $targetPath);
 		}
@@ -746,7 +720,7 @@ class Cache implements ICache {
 			->wherePath($file);
 
 		$result = $query->execute();
-		$size = $result->fetchOne();
+		$size = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($size !== false) {
@@ -793,10 +767,10 @@ class Cache implements ICache {
 	}
 
 	/**
-	 * @param IResult $result
+	 * @param Statement $result
 	 * @return CacheEntry[]
 	 */
-	private function searchResultToCacheEntries(IResult $result): array {
+	private function searchResultToCacheEntries(Statement $result) {
 		$files = $result->fetchAll();
 
 		return array_map(function (array $data) {
@@ -870,9 +844,7 @@ class Cache implements ICache {
 		}
 
 		$result = $query->execute();
-		$cacheEntries = $this->searchResultToCacheEntries($result);
-		$result->closeCursor();
-		return $cacheEntries;
+		return $this->searchResultToCacheEntries($result);
 	}
 
 	/**
@@ -914,7 +886,7 @@ class Cache implements ICache {
 				->andWhere($query->expr()->lt('size', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
 
 			$result = $query->execute();
-			$size = (int)$result->fetchOne();
+			$size = (int)$result->fetchColumn();
 			$result->closeCursor();
 
 			return $size;
@@ -1004,7 +976,7 @@ class Cache implements ICache {
 			->setMaxResults(1);
 
 		$result = $query->execute();
-		$path = $result->fetchOne();
+		$path = $result->fetchColumn();
 		$result->closeCursor();
 
 		return $path;
@@ -1024,7 +996,7 @@ class Cache implements ICache {
 			->whereFileId($id);
 
 		$result = $query->execute();
-		$path = $result->fetchOne();
+		$path = $result->fetchColumn();
 		$result->closeCursor();
 
 		if ($path === false) {

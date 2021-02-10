@@ -5,7 +5,6 @@
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Mario Danic <mario@lovelyhq.com>
  * @author Morris Jobke <hey@morrisjobke.de>
@@ -41,7 +40,6 @@ use OC\Authentication\Listeners\UserDeletedStoreCleanupListener;
 use OC\Authentication\Listeners\UserDeletedTokenCleanupListener;
 use OC\Authentication\Notifications\Notifier as AuthenticationNotifier;
 use OC\Core\Notification\CoreNotifier;
-use OC\DB\Connection;
 use OC\DB\MissingColumnInformation;
 use OC\DB\MissingIndexInformation;
 use OC\DB\MissingPrimaryKeyInformation;
@@ -83,7 +81,7 @@ class Application extends App {
 				/** @var MissingIndexInformation $subject */
 				$subject = $event->getSubject();
 
-				$schema = new SchemaWrapper($container->query(Connection::class));
+				$schema = new SchemaWrapper($container->query(IDBConnection::class));
 
 				if ($schema->hasTable('share')) {
 					$table = $schema->getTable('share');
@@ -107,10 +105,6 @@ class Application extends App {
 
 					if (!$table->hasIndex('fs_mtime')) {
 						$subject->addHintForMissingSubject($table->getName(), 'fs_mtime');
-					}
-
-					if (!$table->hasIndex('fs_size')) {
-						$subject->addHintForMissingSubject($table->getName(), 'fs_size');
 					}
 				}
 
@@ -193,7 +187,7 @@ class Application extends App {
 				/** @var MissingPrimaryKeyInformation $subject */
 				$subject = $event->getSubject();
 
-				$schema = new SchemaWrapper($container->query(Connection::class));
+				$schema = new SchemaWrapper($container->query(IDBConnection::class));
 
 				if ($schema->hasTable('federated_reshares')) {
 					$table = $schema->getTable('federated_reshares');
@@ -250,7 +244,7 @@ class Application extends App {
 				/** @var MissingColumnInformation $subject */
 				$subject = $event->getSubject();
 
-				$schema = new SchemaWrapper($container->query(Connection::class));
+				$schema = new SchemaWrapper($container->query(IDBConnection::class));
 
 				if ($schema->hasTable('comments')) {
 					$table = $schema->getTable('comments');

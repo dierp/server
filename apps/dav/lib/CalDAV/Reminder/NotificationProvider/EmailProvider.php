@@ -9,7 +9,6 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Richard Steinmetz <richard@steinmetz.cloud>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Citharel <nextcloud@tcit.fr>
  *
@@ -84,7 +83,7 @@ class EmailProvider extends AbstractProvider {
 	 */
 	public function send(VEvent $vevent,
 						 string $calendarDisplayName,
-						 array $users = []):void {
+						 array $users=[]):void {
 		$fallbackLanguage = $this->getFallbackLanguage();
 
 		$emailAddressesOfSharees = $this->getEMailAddressesOfAllUsersWithWriteAccessToCalendar($users);

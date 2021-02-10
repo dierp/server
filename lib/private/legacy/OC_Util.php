@@ -44,7 +44,7 @@
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
  * @author Victor Dubiniuk <dubiniuk@owncloud.com>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  * @author Volkan Gezer <volkangezer@gmail.com>
  *
  * @license AGPL-3.0
@@ -66,13 +66,11 @@
 use bantu\IniGetWrapper\IniGetWrapper;
 use OC\AppFramework\Http\Request;
 use OC\Files\Storage\LocalRootStorage;
-use OCP\Files\Template\ITemplateManager;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\ILogger;
 use OCP\IUser;
 use OCP\IUserSession;
-use Psr\Log\LoggerInterface;
 
 class OC_Util {
 	public static $scripts = [];
@@ -413,9 +411,6 @@ class OC_Util {
 	 * @suppress PhanDeprecatedFunction
 	 */
 	public static function copySkeleton($userId, \OCP\Files\Folder $userDirectory) {
-		/** @var LoggerInterface $logger */
-		$logger = \OC::$server->get(LoggerInterface::class);
-
 		$plainSkeletonDirectory = \OC::$server->getConfig()->getSystemValue('skeletondirectory', \OC::$SERVERROOT . '/core/skeleton');
 		$userLang = \OC::$server->getL10NFactory()->findLanguage();
 		$skeletonDirectory = str_replace('{lang}', $userLang, $plainSkeletonDirectory);
@@ -444,14 +439,14 @@ class OC_Util {
 		}
 
 		if (!empty($skeletonDirectory)) {
-			$logger->debug('copying skeleton for '.$userId.' from '.$skeletonDirectory.' to '.$userDirectory->getFullPath('/'), ['app' => 'files_skeleton']);
+			\OCP\Util::writeLog(
+				'files_skeleton',
+				'copying skeleton for '.$userId.' from '.$skeletonDirectory.' to '.$userDirectory->getFullPath('/'),
+				ILogger::DEBUG
+			);
 			self::copyr($skeletonDirectory, $userDirectory);
 			// update the file cache
 			$userDirectory->getStorage()->getScanner()->scan('', \OC\Files\Cache\Scanner::SCAN_RECURSIVE);
-
-			/** @var ITemplateManager $templateManager */
-			$templateManager = \OC::$server->get(ITemplateManager::class);
-			$templateManager->initializeTemplateDirectory(null, $userId);
 		}
 	}
 
@@ -917,7 +912,7 @@ class OC_Util {
 			}
 			$errors[] = [
 				'error' => $l->t('PHP setting "%s" is not set to "%s".', [$setting[0], var_export($setting[1], true)]),
-				'hint' => $l->t('Adjusting this setting in php.ini will make Nextcloud run again')
+				'hint' =>  $l->t('Adjusting this setting in php.ini will make Nextcloud run again')
 			];
 			$webServerRestart = true;
 		}
@@ -941,9 +936,9 @@ class OC_Util {
 		if (function_exists('xml_parser_create') &&
 			LIBXML_LOADED_VERSION < 20700) {
 			$version = LIBXML_LOADED_VERSION;
-			$major = floor($version / 10000);
+			$major = floor($version/10000);
 			$version -= ($major * 10000);
-			$minor = floor($version / 100);
+			$minor = floor($version/100);
 			$version -= ($minor * 100);
 			$patch = $version;
 			$errors[] = [
@@ -998,7 +993,7 @@ class OC_Util {
 						];
 					}
 				}
-			} catch (\Doctrine\DBAL\Exception $e) {
+			} catch (\Doctrine\DBAL\DBALException $e) {
 				$logger = \OC::$server->getLogger();
 				$logger->warning('Error occurred while checking PostgreSQL version, assuming >= 9');
 				$logger->logException($e);
@@ -1298,13 +1293,7 @@ class OC_Util {
 	 * @return bool
 	 */
 	public static function isSetLocaleWorking() {
-		if ('' === basename('§')) {
-			// Borrowed from \Patchwork\Utf8\Bootup::initLocale
-			setlocale(LC_ALL, 'C.UTF-8', 'C');
-			setlocale(LC_CTYPE, 'en_US.UTF-8', 'fr_FR.UTF-8', 'es_ES.UTF-8', 'de_DE.UTF-8', 'ru_RU.UTF-8', 'pt_BR.UTF-8', 'it_IT.UTF-8', 'ja_JP.UTF-8', 'zh_CN.UTF-8', '0');
-		}
-
-		// Check again
+		\Patchwork\Utf8\Bootup::initLocale();
 		if ('' === basename('§')) {
 			return false;
 		}

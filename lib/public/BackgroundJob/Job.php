@@ -68,7 +68,7 @@ abstract class Job implements IJob {
 	 *
 	 * @since 15.0.0
 	 */
-	public function execute(IJobList $jobList, ILogger $logger = null) {
+	public function execute($jobList, ILogger $logger = null) {
 		$jobList->setLastRun($this);
 		if ($logger === null) {
 			$logger = \OC::$server->getLogger();
@@ -95,14 +95,14 @@ abstract class Job implements IJob {
 	/**
 	 * @since 15.0.0
 	 */
-	final public function setId(int $id) {
+	final public function setId($id) {
 		$this->id = $id;
 	}
 
 	/**
 	 * @since 15.0.0
 	 */
-	final public function setLastRun(int $lastRun) {
+	final public function setLastRun($lastRun) {
 		$this->lastRun = $lastRun;
 	}
 
@@ -138,6 +138,7 @@ abstract class Job implements IJob {
 	 * The actual function that is called to run the job
 	 *
 	 * @param $argument
+	 * @return mixed
 	 *
 	 * @since 15.0.0
 	 */

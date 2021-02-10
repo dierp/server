@@ -42,7 +42,7 @@
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
  * @author Tobia De Koninck <tobia@ledfan.be>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  * @author Volkan Gezer <volkangezer@gmail.com>
  *
  * @license AGPL-3.0
@@ -159,7 +159,7 @@ class OC {
 				'SCRIPT_FILENAME' => $_SERVER['SCRIPT_FILENAME'],
 			],
 		];
-		$fakeRequest = new \OC\AppFramework\Http\Request($params, new \OC\Security\SecureRandom(), new \OC\AllConfig(new \OC\SystemConfig(self::$config)));
+		$fakeRequest = new \OC\AppFramework\Http\Request($params, null, new \OC\AllConfig(new \OC\SystemConfig(self::$config)));
 		$scriptName = $fakeRequest->getScriptName();
 		if (substr($scriptName, -1) == '/') {
 			$scriptName .= 'index.php';
@@ -211,18 +211,25 @@ class OC {
 			}
 		} elseif (file_exists(OC::$SERVERROOT . '/apps')) {
 			OC::$APPSROOTS[] = ['path' => OC::$SERVERROOT . '/apps', 'url' => '/apps', 'writable' => true];
+		} elseif (file_exists(OC::$SERVERROOT . '/../apps')) {
+			OC::$APPSROOTS[] = [
+				'path' => rtrim(dirname(OC::$SERVERROOT), '/') . '/apps',
+				'url' => '/apps',
+				'writable' => true
+			];
 		}
 
 		if (empty(OC::$APPSROOTS)) {
 			throw new \RuntimeException('apps directory not found! Please put the Nextcloud apps folder in the Nextcloud folder'
-				. '. You can also configure the location in the config.php file.');
+				. ' or the folder above. You can also configure the location in the config.php file.');
 		}
 		$paths = [];
 		foreach (OC::$APPSROOTS as $path) {
 			$paths[] = $path['path'];
 			if (!is_dir($path['path'])) {
 				throw new \RuntimeException(sprintf('App directory "%s" not found! Please put the Nextcloud apps folder in the'
-					. ' Nextcloud folder. You can also configure the location in the config.php file.', $path['path']));
+					. ' Nextcloud folder or the folder above. You can also configure the location in the'
+					. ' config.php file.', $path['path']));
 			}
 		}
 
@@ -266,12 +273,12 @@ class OC {
 		}
 	}
 
-	public static function checkInstalled(\OC\SystemConfig $systemConfig) {
+	public static function checkInstalled() {
 		if (defined('OC_CONSOLE')) {
 			return;
 		}
 		// Redirect to installer if not installed
-		if (!$systemConfig->getValue('installed', false) && OC::$SUBURI !== '/index.php' && OC::$SUBURI !== '/status.php') {
+		if (!\OC::$server->getSystemConfig()->getValue('installed', false) && OC::$SUBURI !== '/index.php' && OC::$SUBURI !== '/status.php') {
 			if (OC::$CLI) {
 				throw new Exception('Not installed');
 			} else {
@@ -282,9 +289,9 @@ class OC {
 		}
 	}
 
-	public static function checkMaintenanceMode(\OC\SystemConfig $systemConfig) {
+	public static function checkMaintenanceMode() {
 		// Allow ajax update script to execute without being stopped
-		if (((bool) $systemConfig->getValue('maintenance', false)) && OC::$SUBURI != '/core/ajax/update.php') {
+		if (((bool) \OC::$server->getSystemConfig()->getValue('maintenance', false)) && OC::$SUBURI != '/core/ajax/update.php') {
 			// send http status 503
 			http_response_code(503);
 			header('Retry-After: 120');
@@ -496,14 +503,14 @@ class OC {
 	 * We use an additional cookie since we want to protect logout CSRF and
 	 * also we can't directly interfere with PHP's session mechanism.
 	 */
-	private static function performSameSiteCookieProtection(\OCP\IConfig $config) {
+	private static function performSameSiteCookieProtection() {
 		$request = \OC::$server->getRequest();
 
 		// Some user agents are notorious and don't really properly follow HTTP
 		// specifications. For those, have an automated opt-out. Since the protection
 		// for remote.php is applied in base.php as starting point we need to opt out
 		// here.
-		$incompatibleUserAgents = $config->getSystemValue('csrf.optout');
+		$incompatibleUserAgents = \OC::$server->getConfig()->getSystemValue('csrf.optout');
 
 		// Fallback, if csrf.optout is unset
 		if (!is_array($incompatibleUserAgents)) {
@@ -522,7 +529,7 @@ class OC {
 		if (count($_COOKIE) > 0) {
 			$requestUri = $request->getScriptName();
 			$processingScript = explode('/', $requestUri);
-			$processingScript = $processingScript[count($processingScript) - 1];
+			$processingScript = $processingScript[count($processingScript)-1];
 
 			// index.php routes are handled in the middleware
 			if ($processingScript === 'index.php') {
@@ -534,7 +541,7 @@ class OC {
 				self::sendSameSiteCookies();
 				// Debug mode gets access to the resources without strict cookie
 				// due to the fact that the SabreDAV browser also lives there.
-				if (!$config->getSystemValue('debug', false)) {
+				if (!\OC::$server->getConfig()->getSystemValue('debug', false)) {
 					http_response_code(\OCP\AppFramework\Http::STATUS_SERVICE_UNAVAILABLE);
 					exit();
 				}
@@ -586,9 +593,8 @@ class OC {
 		// setup the basic server
 		self::$server = new \OC\Server(\OC::$WEBROOT, self::$config);
 		self::$server->boot();
-		$eventLogger = \OC::$server->getEventLogger();
-		$eventLogger->log('autoloader', 'Autoloader', $loaderStart, $loaderEnd);
-		$eventLogger->start('boot', 'Initialize');
+		\OC::$server->getEventLogger()->log('autoloader', 'Autoloader', $loaderStart, $loaderEnd);
+		\OC::$server->getEventLogger()->start('boot', 'Initialize');
 
 		// Override php.ini and log everything if we're troubleshooting
 		if (self::$config->getValue('loglevel') === ILogger::DEBUG) {
@@ -614,40 +620,44 @@ class OC {
 		@ini_set('max_execution_time', '3600');
 		@ini_set('max_input_time', '3600');
 
+		//try to set the maximum filesize to 10G
+		@ini_set('upload_max_filesize', '10G');
+		@ini_set('post_max_size', '10G');
+		@ini_set('file_uploads', '50');
+
 		self::setRequiredIniValues();
 		self::handleAuthHeaders();
-		$systemConfig = \OC::$server->get(\OC\SystemConfig::class);
-		self::registerAutoloaderCache($systemConfig);
+		self::registerAutoloaderCache();
 
-		// initialize intl fallback if necessary
+		// initialize intl fallback is necessary
+		\Patchwork\Utf8\Bootup::initIntl();
 		OC_Util::isSetLocaleWorking();
 
-		$config = \OC::$server->get(\OCP\IConfig::class);
 		if (!defined('PHPUNIT_RUN')) {
 			OC\Log\ErrorHandler::setLogger(\OC::$server->getLogger());
-			$debug = $config->getSystemValue('debug', false);
+			$debug = \OC::$server->getConfig()->getSystemValue('debug', false);
 			OC\Log\ErrorHandler::register($debug);
 		}
 
 		/** @var \OC\AppFramework\Bootstrap\Coordinator $bootstrapCoordinator */
 		$bootstrapCoordinator = \OC::$server->query(\OC\AppFramework\Bootstrap\Coordinator::class);
-		$bootstrapCoordinator->runInitialRegistration();
+		$bootstrapCoordinator->runRegistration();
 
-		$eventLogger->start('init_session', 'Initialize session');
+		\OC::$server->getEventLogger()->start('init_session', 'Initialize session');
 		OC_App::loadApps(['session']);
 		if (!self::$CLI) {
 			self::initSession();
 		}
-		$eventLogger->end('init_session');
+		\OC::$server->getEventLogger()->end('init_session');
 		self::checkConfig();
-		self::checkInstalled($systemConfig);
+		self::checkInstalled();
 
 		OC_Response::addSecurityHeaders();
 
-		self::performSameSiteCookieProtection($config);
+		self::performSameSiteCookieProtection();
 
 		if (!defined('OC_CONSOLE')) {
-			$errors = OC_Util::checkServer($systemConfig);
+			$errors = OC_Util::checkServer(\OC::$server->getSystemConfig());
 			if (count($errors) > 0) {
 				if (!self::$CLI) {
 					http_response_code(503);
@@ -673,18 +683,20 @@ class OC {
 				}
 
 				try {
-					$config->setAppValue('core', 'cronErrors', json_encode($staticErrors));
+					\OC::$server->getConfig()->setAppValue('core', 'cronErrors', json_encode($staticErrors));
 				} catch (\Exception $e) {
 					echo('Writing to database failed');
 				}
 				exit(1);
-			} elseif (self::$CLI && $config->getSystemValue('installed', false)) {
-				$config->deleteAppValue('core', 'cronErrors');
+			} elseif (self::$CLI && \OC::$server->getConfig()->getSystemValue('installed', false)) {
+				\OC::$server->getConfig()->deleteAppValue('core', 'cronErrors');
 			}
 		}
 		//try to set the session lifetime
 		$sessionLifeTime = self::getSessionLifeTime();
 		@ini_set('gc_maxlifetime', (string)$sessionLifeTime);
+
+		$systemConfig = \OC::$server->getSystemConfig();
 
 		// User and Groups
 		if (!$systemConfig->getValue("installed", false)) {
@@ -710,10 +722,11 @@ class OC {
 			OC_User::setIncognitoMode(true);
 		}
 
-		self::registerCleanupHooks($systemConfig);
+		self::registerCleanupHooks();
 		self::registerFilesystemHooks();
-		self::registerShareHooks($systemConfig);
-		self::registerEncryptionWrapperAndHooks();
+		self::registerShareHooks();
+		self::registerEncryptionWrapper();
+		self::registerEncryptionHooks();
 		self::registerAccountHooks();
 		self::registerResourceCollectionHooks();
 		self::registerAppRestrictionsHooks();
@@ -748,7 +761,7 @@ class OC {
 		 */
 		if (!OC::$CLI
 			&& !\OC::$server->getTrustedDomainHelper()->isTrustedDomain($host)
-			&& $config->getSystemValue('installed', false)
+			&& self::$server->getConfig()->getSystemValue('installed', false)
 		) {
 			// Allow access to CSS resources
 			$isScssRequest = false;
@@ -782,15 +795,15 @@ class OC {
 				exit();
 			}
 		}
-		$eventLogger->end('boot');
+		\OC::$server->getEventLogger()->end('boot');
 	}
 
 	/**
 	 * register hooks for the cleanup of cache and bruteforce protection
 	 */
-	public static function registerCleanupHooks(\OC\SystemConfig $systemConfig) {
+	public static function registerCleanupHooks() {
 		//don't try to do this before we are properly setup
-		if ($systemConfig->getValue('installed', false) && !\OCP\Util::needUpgrade()) {
+		if (\OC::$server->getSystemConfig()->getValue('installed', false) && !\OCP\Util::needUpgrade()) {
 
 			// NOTE: This will be replaced to use OCP
 			$userSession = self::$server->getUserSession();
@@ -824,11 +837,13 @@ class OC {
 		}
 	}
 
-	private static function registerEncryptionWrapperAndHooks() {
+	private static function registerEncryptionWrapper() {
 		$manager = self::$server->getEncryptionManager();
 		\OCP\Util::connectHook('OC_Filesystem', 'preSetup', $manager, 'setupStorage');
+	}
 
-		$enabled = $manager->isEnabled();
+	private static function registerEncryptionHooks() {
+		$enabled = self::$server->getEncryptionManager()->isEnabled();
 		if ($enabled) {
 			\OCP\Util::connectHook(Share::class, 'post_shared', HookManager::class, 'postShared');
 			\OCP\Util::connectHook(Share::class, 'post_unshare', HookManager::class, 'postUnshared');
@@ -838,12 +853,11 @@ class OC {
 	}
 
 	private static function registerAccountHooks() {
-		$hookHandler = \OC::$server->get(\OC\Accounts\Hooks::class);
+		$hookHandler = new \OC\Accounts\Hooks(\OC::$server->getLogger());
 		\OCP\Util::connectHook('OC_User', 'changeUser', $hookHandler, 'changeUserHook');
 	}
 
 	private static function registerAppRestrictionsHooks() {
-		/** @var \OC\Group\Manager $groupManager */
 		$groupManager = self::$server->query(\OCP\IGroupManager::class);
 		$groupManager->listen('\OC\Group', 'postDelete', function (\OCP\IGroup $group) {
 			$appManager = self::$server->getAppManager();
@@ -881,8 +895,8 @@ class OC {
 	/**
 	 * register hooks for sharing
 	 */
-	public static function registerShareHooks(\OC\SystemConfig $systemConfig) {
-		if ($systemConfig->getValue('installed')) {
+	public static function registerShareHooks() {
+		if (\OC::$server->getSystemConfig()->getValue('installed')) {
 			OC_Hook::connect('OC_User', 'post_deleteUser', Hooks::class, 'post_deleteUser');
 			OC_Hook::connect('OC_User', 'post_deleteGroup', Hooks::class, 'post_deleteGroup');
 
@@ -892,14 +906,14 @@ class OC {
 		}
 	}
 
-	protected static function registerAutoloaderCache(\OC\SystemConfig $systemConfig) {
+	protected static function registerAutoloaderCache() {
 		// The class loader takes an optional low-latency cache, which MUST be
 		// namespaced. The instanceid is used for namespacing, but might be
 		// unavailable at this point. Furthermore, it might not be possible to
 		// generate an instanceid via \OC_Util::getInstanceId() because the
 		// config file may not be writable. As such, we only register a class
 		// loader cache if instanceid is available without trying to create one.
-		$instanceId = $systemConfig->getValue('instanceid', null);
+		$instanceId = \OC::$server->getSystemConfig()->getValue('instanceid', null);
 		if ($instanceId) {
 			try {
 				$memcacheFactory = \OC::$server->getMemCacheFactory();
@@ -939,7 +953,7 @@ class OC {
 			return;
 		}
 		if (substr($requestPath, -3) !== '.js') { // we need these files during the upgrade
-			self::checkMaintenanceMode($systemConfig);
+			self::checkMaintenanceMode();
 
 			if (\OCP\Util::needUpgrade()) {
 				if (function_exists('opcache_reset')) {
@@ -990,7 +1004,8 @@ class OC {
 					OC_App::loadApps(['filesystem', 'logging']);
 					OC_App::loadApps();
 				}
-				OC::$server->get(\OC\Route\Router::class)->match($request->getRawPathInfo());
+				OC_Util::setupFS();
+				OC::$server->getRouter()->match(\OC::$server->getRequest()->getRawPathInfo());
 				return;
 			} catch (Symfony\Component\Routing\Exception\ResourceNotFoundException $e) {
 				//header('HTTP/1.0 404 Not Found');

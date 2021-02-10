@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Juan Pablo Villafáñez <jvillafanez@solidgear.es>
  * @author Julius Härtl <jus@bitgrid.net>
@@ -24,7 +23,7 @@ declare(strict_types=1);
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -135,10 +134,10 @@ class Request implements \ArrayAccess, \Countable, IRequest {
 	 * @param IConfig $config
 	 * @param CsrfTokenManager|null $csrfTokenManager
 	 * @param string $stream
-	 * @see https://www.php.net/manual/en/reserved.variables.php
+	 * @see http://www.php.net/manual/en/reserved.variables.php
 	 */
-	public function __construct(array $vars,
-								ISecureRandom $secureRandom,
+	public function __construct(array $vars= [],
+								ISecureRandom $secureRandom = null,
 								IConfig $config,
 								CsrfTokenManager $csrfTokenManager = null,
 								string $stream = 'php://input') {
@@ -828,7 +827,7 @@ class Request implements \ArrayAccess, \Countable, IRequest {
 	 */
 	public function getScriptName(): string {
 		$name = $this->server['SCRIPT_NAME'];
-		$overwriteWebRoot = $this->config->getSystemValue('overwritewebroot');
+		$overwriteWebRoot =  $this->config->getSystemValue('overwritewebroot');
 		if ($overwriteWebRoot !== '' && $this->isOverwriteCondition()) {
 			// FIXME: This code is untestable due to __DIR__, also that hardcoded path is really dangerous
 			$serverRoot = str_replace('\\', '/', substr(__DIR__, 0, -\strlen('lib/private/appframework/http/')));

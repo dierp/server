@@ -6,7 +6,7 @@
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -42,7 +42,7 @@ class Quota extends Wrapper {
 	/**
 	 * @param resource $stream
 	 * @param int $limit
-	 * @return bool|resource
+	 * @return resource
 	 */
 	public static function wrap($stream, $limit) {
 		$context = stream_context_create([

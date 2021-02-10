@@ -28,7 +28,6 @@ namespace OCA\Files_External\Lib;
 use OC\Files\Mount\MoveableMount;
 use OCA\Files_External\Config\ExternalMountPoint;
 use OCA\Files_External\Service\UserStoragesService;
-use OCP\Files\Storage\IStorage;
 
 /**
  * Person mount points can be moved by the user
@@ -43,7 +42,7 @@ class PersonalMount extends ExternalMountPoint implements MoveableMount {
 	/**
 	 * @param UserStoragesService $storagesService
 	 * @param int $storageId
-	 * @param IStorage $storage
+	 * @param \OCP\Files\Storage $storage
 	 * @param string $mountpoint
 	 * @param array $arguments (optional) configuration for the storage backend
 	 * @param \OCP\Files\Storage\IStorageFactory $loader
@@ -51,7 +50,6 @@ class PersonalMount extends ExternalMountPoint implements MoveableMount {
 	 */
 	public function __construct(
 		UserStoragesService $storagesService,
-		StorageConfig $storageConfig,
 		$storageId,
 		$storage,
 		$mountpoint,
@@ -60,7 +58,7 @@ class PersonalMount extends ExternalMountPoint implements MoveableMount {
 		$mountOptions = null,
 		$mountId = null
 	) {
-		parent::__construct($storageConfig, $storage, $mountpoint, $arguments, $loader, $mountOptions, $mountId);
+		parent::__construct($storage, $mountpoint, $arguments, $loader, $mountOptions, $mountId);
 		$this->storagesService = $storagesService;
 		$this->numericStorageId = $storageId;
 	}

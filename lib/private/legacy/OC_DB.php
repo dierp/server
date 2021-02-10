@@ -12,7 +12,7 @@
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -44,7 +44,7 @@ class OC_DB {
 	 * @return \OC\DB\MDB2SchemaManager
 	 */
 	private static function getMDB2SchemaManager() {
-		return new \OC\DB\MDB2SchemaManager(\OC::$server->get(\OC\DB\Connection::class));
+		return new \OC\DB\MDB2SchemaManager(\OC::$server->getDatabaseConnection());
 	}
 
 	/**
@@ -55,7 +55,6 @@ class OC_DB {
 	 * @param bool|null $isManipulation
 	 * @throws \OC\DatabaseException
 	 * @return OC_DB_StatementWrapper prepared SQL query
-	 * @deprecated 21.0.0 Please use \OCP\IDBConnection::getQueryBuilder() instead
 	 *
 	 * SQL query via Doctrine prepare(), needs to be execute()'d!
 	 */
@@ -69,8 +68,8 @@ class OC_DB {
 
 		// return the result
 		try {
-			$result = $connection->prepare($query, $limit, $offset);
-		} catch (\Doctrine\DBAL\Exception $e) {
+			$result =$connection->prepare($query, $limit, $offset);
+		} catch (\Doctrine\DBAL\DBALException $e) {
 			throw new \OC\DatabaseException($e->getMessage());
 		}
 		// differentiate between query and manipulation
@@ -117,7 +116,6 @@ class OC_DB {
 	 * @param array $parameters
 	 * @return OC_DB_StatementWrapper
 	 * @throws \OC\DatabaseException
-	 * @deprecated 21.0.0 Please use \OCP\IDBConnection::getQueryBuilder() instead
 	 */
 	public static function executeAudited($stmt, array $parameters = []) {
 		if (is_string($stmt)) {
@@ -160,6 +158,18 @@ class OC_DB {
 	}
 
 	/**
+	 * saves database schema to xml file
+	 * @param string $file name of file
+	 * @return bool
+	 *
+	 * TODO: write more documentation
+	 */
+	public static function getDbStructure($file) {
+		$schemaManager = self::getMDB2SchemaManager();
+		return $schemaManager->getDbStructure($file);
+	}
+
+	/**
 	 * Creates tables from XML file
 	 * @param string $file file to read structure from
 	 * @return bool
@@ -199,7 +209,7 @@ class OC_DB {
 	}
 
 	/**
-	 * check if a result is an error and throws an exception, works with \Doctrine\DBAL\Exception
+	 * check if a result is an error and throws an exception, works with \Doctrine\DBAL\DBALException
 	 * @param mixed $result
 	 * @param string $message
 	 * @return void

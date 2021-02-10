@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * @copyright 2018, Roeland Jago Douma <roeland@famdouma.nl>
  *
- * @author Iscle <albertiscle9@gmail.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -82,17 +81,13 @@ class DirectController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 */
-	public function getUrl(int $fileId, int $expirationTime = 60 * 60 * 8): DataResponse {
+	public function getUrl(int $fileId): DataResponse {
 		$userFolder = $this->rootFolder->getUserFolder($this->userId);
 
 		$files = $userFolder->getById($fileId);
 
 		if ($files === []) {
 			throw new OCSNotFoundException();
-		}
-
-		if ($expirationTime <= 0 || $expirationTime > (60 * 60 * 24)) {
-			throw new OCSBadRequestException('Expiration time should be greater than 0 and less than or equal to ' . (60 * 60 * 24));
 		}
 
 		$file = array_shift($files);
@@ -107,7 +102,7 @@ class DirectController extends OCSController {
 
 		$token = $this->random->generate(60, ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS);
 		$direct->setToken($token);
-		$direct->setExpiration($this->timeFactory->getTime() + $expirationTime);
+		$direct->setExpiration($this->timeFactory->getTime() + 60 * 60 * 8);
 
 		$this->mapper->insert($direct);
 

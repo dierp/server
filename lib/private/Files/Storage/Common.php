@@ -21,7 +21,7 @@
  * @author scambra <sergio@entrecables.com>
  * @author Stefan Weil <sw@weilnetz.de>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  * @author Vinicius Cubas Brand <vinicius@eita.org.br>
  *
  * @license AGPL-3.0
@@ -630,9 +630,8 @@ abstract class Common implements Storage, ILockingStorage, IWriteStreamStorage {
 				}
 			}
 
-			if ($result && $preserveMtime) {
-				$mtime = $sourceStorage->filemtime($sourceInternalPath);
-				$this->touch($targetInternalPath, is_int($mtime) ? $mtime : null);
+			if ($result and $preserveMtime) {
+				$this->touch($targetInternalPath, $sourceStorage->filemtime($sourceInternalPath));
 			}
 
 			if (!$result) {

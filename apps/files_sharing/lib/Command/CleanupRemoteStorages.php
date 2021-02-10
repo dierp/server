@@ -106,7 +106,7 @@ class CleanupRemoteStorages extends Command {
 				IQueryBuilder::PARAM_STR)
 			);
 		$result = $queryBuilder->execute();
-		$count = $result->fetchOne();
+		$count = $result->fetchColumn();
 		$output->writeln("$count files can be deleted for storage $numericId");
 	}
 

@@ -5,7 +5,13 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2017 Bjoern Schiessle <bjoern@schiessle.org>
  *
+ * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Mario Danic <mario@lovelyhq.com>
+ * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Robin Appelman <robin@icewind.nl>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Thomas Citharel <nextcloud@tcit.fr>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -26,7 +32,6 @@ declare(strict_types=1);
 
 namespace OC\Core\Command\Db;
 
-use OC\DB\Connection;
 use OC\DB\SchemaWrapper;
 use OCP\IDBConnection;
 use Symfony\Component\Console\Command\Command;
@@ -45,13 +50,13 @@ use Symfony\Component\EventDispatcher\GenericEvent;
  */
 class AddMissingPrimaryKeys extends Command {
 
-	/** @var Connection */
+	/** @var IDBConnection */
 	private $connection;
 
 	/** @var EventDispatcherInterface */
 	private $dispatcher;
 
-	public function __construct(Connection $connection, EventDispatcherInterface $dispatcher) {
+	public function __construct(IDBConnection $connection, EventDispatcherInterface $dispatcher) {
 		parent::__construct();
 
 		$this->connection = $connection;

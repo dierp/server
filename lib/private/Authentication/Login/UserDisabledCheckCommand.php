@@ -3,7 +3,6 @@
  * @copyright 2019 Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,19 +26,19 @@ declare(strict_types=1);
 namespace OC\Authentication\Login;
 
 use OC\Core\Controller\LoginController;
+use OCP\ILogger;
 use OCP\IUserManager;
-use Psr\Log\LoggerInterface;
 
 class UserDisabledCheckCommand extends ALoginCommand {
 
 	/** @var IUserManager */
 	private $userManager;
 
-	/** @var LoggerInterface */
+	/** @var ILogger */
 	private $logger;
 
 	public function __construct(IUserManager $userManager,
-								LoggerInterface $logger) {
+								ILogger $logger) {
 		$this->userManager = $userManager;
 		$this->logger = $logger;
 	}

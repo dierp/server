@@ -6,7 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = $vendorDir;
 
 return array(
-    'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'OCA\\DAV\\AppInfo\\Application' => $baseDir . '/../lib/AppInfo/Application.php',
     'OCA\\DAV\\AppInfo\\PluginManager' => $baseDir . '/../lib/AppInfo/PluginManager.php',
     'OCA\\DAV\\Avatars\\AvatarHome' => $baseDir . '/../lib/Avatars/AvatarHome.php',
@@ -204,11 +203,8 @@ return array(
     'OCA\\DAV\\Files\\Sharing\\FilesDropPlugin' => $baseDir . '/../lib/Files/Sharing/FilesDropPlugin.php',
     'OCA\\DAV\\Files\\Sharing\\PublicLinkCheckPlugin' => $baseDir . '/../lib/Files/Sharing/PublicLinkCheckPlugin.php',
     'OCA\\DAV\\HookManager' => $baseDir . '/../lib/HookManager.php',
-    'OCA\\DAV\\Listener\\CalendarContactInteractionListener' => $baseDir . '/../lib/Listener/CalendarContactInteractionListener.php',
     'OCA\\DAV\\Migration\\BuildCalendarSearchIndex' => $baseDir . '/../lib/Migration/BuildCalendarSearchIndex.php',
     'OCA\\DAV\\Migration\\BuildCalendarSearchIndexBackgroundJob' => $baseDir . '/../lib/Migration/BuildCalendarSearchIndexBackgroundJob.php',
-    'OCA\\DAV\\Migration\\BuildSocialSearchIndex' => $baseDir . '/../lib/Migration/BuildSocialSearchIndex.php',
-    'OCA\\DAV\\Migration\\BuildSocialSearchIndexBackgroundJob' => $baseDir . '/../lib/Migration/BuildSocialSearchIndexBackgroundJob.php',
     'OCA\\DAV\\Migration\\CalDAVRemoveEmptyValue' => $baseDir . '/../lib/Migration/CalDAVRemoveEmptyValue.php',
     'OCA\\DAV\\Migration\\ChunkCleanup' => $baseDir . '/../lib/Migration/ChunkCleanup.php',
     'OCA\\DAV\\Migration\\FixBirthdayCalendarComponent' => $baseDir . '/../lib/Migration/FixBirthdayCalendarComponent.php',

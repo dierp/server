@@ -5,10 +5,10 @@
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Piotr Mrówczyński <mrow4a@yahoo.com>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  *
@@ -28,8 +28,6 @@
  *
  */
 
-use OCP\DB\IPreparedStatement;
-
 /**
  * small wrapper around \Doctrine\DBAL\Driver\Statement to make it behave, more like an MDB2 Statement
  *
@@ -40,20 +38,17 @@ use OCP\DB\IPreparedStatement;
  * @method array fetchAll(integer $fetchMode = null);
  */
 class OC_DB_StatementWrapper {
-	/** @var IPreparedStatement */
+	/**
+	 * @var \Doctrine\DBAL\Driver\Statement
+	 */
 	private $statement = null;
-
-	/** @var bool */
 	private $isManipulation = false;
-
-	/** @var array */
 	private $lastArguments = [];
 
 	/**
-	 * @param IPreparedStatement $statement
 	 * @param boolean $isManipulation
 	 */
-	public function __construct(IPreparedStatement $statement, $isManipulation) {
+	public function __construct($statement, $isManipulation) {
 		$this->statement = $statement;
 		$this->isManipulation = $isManipulation;
 	}
@@ -68,34 +63,31 @@ class OC_DB_StatementWrapper {
 	/**
 	 * make execute return the result instead of a bool
 	 *
-	 * @param mixed[] $input
+	 * @param array $input
 	 * @return \OC_DB_StatementWrapper|int|bool
-	 * @deprecated
 	 */
-	public function execute($input = []) {
+	public function execute($input= []) {
 		$this->lastArguments = $input;
-		try {
-			if (count($input) > 0) {
-				$result = $this->statement->execute($input);
-			} else {
-				$result = $this->statement->execute();
-			}
-		} catch (\Doctrine\DBAL\Exception $e) {
+		if (count($input) > 0) {
+			$result = $this->statement->execute($input);
+		} else {
+			$result = $this->statement->execute();
+		}
+
+		if ($result === false) {
 			return false;
 		}
-
 		if ($this->isManipulation) {
 			return $this->statement->rowCount();
+		} else {
+			return $this;
 		}
-
-		return $this;
 	}
 
 	/**
 	 * provide an alias for fetch
 	 *
 	 * @return mixed
-	 * @deprecated
 	 */
 	public function fetchRow() {
 		return $this->statement->fetch();
@@ -105,11 +97,11 @@ class OC_DB_StatementWrapper {
 	 * Provide a simple fetchOne.
 	 *
 	 * fetch single column from the next row
+	 * @param int $column the column number to fetch
 	 * @return string
-	 * @deprecated
 	 */
-	public function fetchOne() {
-		return $this->statement->fetchOne();
+	public function fetchOne($column = 0) {
+		return $this->statement->fetchColumn($column);
 	}
 
 	/**

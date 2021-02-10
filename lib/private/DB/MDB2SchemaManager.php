@@ -11,7 +11,7 @@
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Victor Dubiniuk <dubiniuk@owncloud.com>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -31,21 +31,33 @@
 
 namespace OC\DB;
 
-use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSQL94Platform;
+use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\Schema;
+use OCP\IDBConnection;
 
 class MDB2SchemaManager {
-	/** @var Connection $conn */
+	/** @var \OC\DB\Connection $conn */
 	protected $conn;
 
 	/**
-	 * @param Connection $conn
+	 * @param IDBConnection $conn
 	 */
 	public function __construct($conn) {
 		$this->conn = $conn;
+	}
+
+	/**
+	 * saves database scheme to xml file
+	 * @param string $file name of file
+	 * @return bool
+	 *
+	 * TODO: write more documentation
+	 */
+	public function getDbStructure($file) {
+		return \OC\DB\MDB2SchemaWriter::saveSchemaToFile($file, $this->conn);
 	}
 
 	/**
@@ -74,9 +86,9 @@ class MDB2SchemaManager {
 			return new SQLiteMigrator($this->conn, $random, $config, $dispatcher);
 		} elseif ($platform instanceof OraclePlatform) {
 			return new OracleMigrator($this->conn, $random, $config, $dispatcher);
-		} elseif ($platform instanceof MySQLPlatform) {
+		} elseif ($platform instanceof MySqlPlatform) {
 			return new MySQLMigrator($this->conn, $random, $config, $dispatcher);
-		} elseif ($platform instanceof PostgreSQL94Platform) {
+		} elseif ($platform instanceof PostgreSqlPlatform) {
 			return new PostgreSqlMigrator($this->conn, $random, $config, $dispatcher);
 		} else {
 			return new Migrator($this->conn, $random, $config, $dispatcher);

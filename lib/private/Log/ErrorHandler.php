@@ -5,7 +5,6 @@
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Björn Schießle <bjoern@schiessle.org>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  *
@@ -42,7 +41,7 @@ class ErrorHandler {
 		return preg_replace('/\/\/(.*):(.*)@/', '//xxx:xxx@', $msg);
 	}
 
-	public static function register($debug = false) {
+	public static function register($debug=false) {
 		$handler = new ErrorHandler();
 
 		if ($debug) {

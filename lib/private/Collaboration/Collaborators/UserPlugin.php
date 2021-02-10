@@ -6,7 +6,6 @@
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
@@ -157,8 +156,6 @@ class UserPlugin implements ISearchPlugin {
 				}
 				$result['exact'][] = [
 					'label' => $userDisplayName,
-					'subline' => $status['message'] ?? '',
-					'icon' => 'icon-user',
 					'value' => [
 						'shareType' => IShare::TYPE_USER,
 						'shareWith' => $uid,
@@ -182,8 +179,6 @@ class UserPlugin implements ISearchPlugin {
 				if ($addToWideResults) {
 					$result['wide'][] = [
 						'label' => $userDisplayName,
-						'subline' => $status['message'] ?? '',
-						'icon' => 'icon-user',
 						'value' => [
 							'shareType' => IShare::TYPE_USER,
 							'shareWith' => $uid,
@@ -226,8 +221,6 @@ class UserPlugin implements ISearchPlugin {
 
 					$result['exact'][] = [
 						'label' => $user->getDisplayName(),
-						'icon' => 'icon-user',
-						'subline' => $status['message'] ?? '',
 						'value' => [
 							'shareType' => IShare::TYPE_USER,
 							'shareWith' => $user->getUID(),

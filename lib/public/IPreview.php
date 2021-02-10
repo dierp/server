@@ -48,7 +48,6 @@ interface IPreview {
 
 	/**
 	 * @since 9.2.0
-	 * @deprecated 22.0.0
 	 */
 	public const EVENT = self::class . ':' . 'PreviewRequested';
 

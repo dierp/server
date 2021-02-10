@@ -42,8 +42,17 @@ class User_Proxy extends Proxy implements \OCP\IUserBackend, \OCP\UserInterface,
 	/** @var User_LDAP */
 	private $refBackend = null;
 
+	/**
+	 * Constructor
+	 *
+	 * @param array $serverConfigPrefixes array containing the config Prefixes
+	 * @param ILDAPWrapper $ldap
+	 * @param IConfig $ocConfig
+	 * @param INotificationManager $notificationManager
+	 * @param IUserSession $userSession
+	 */
 	public function __construct(
-		Helper $helper,
+		array $serverConfigPrefixes,
 		ILDAPWrapper $ldap,
 		IConfig $ocConfig,
 		INotificationManager $notificationManager,
@@ -51,7 +60,6 @@ class User_Proxy extends Proxy implements \OCP\IUserBackend, \OCP\UserInterface,
 		UserPluginManager $userPluginManager
 	) {
 		parent::__construct($ldap);
-		$serverConfigPrefixes = $helper->getServerConfigurationPrefixes(true);
 		foreach ($serverConfigPrefixes as $configPrefix) {
 			$this->backends[$configPrefix] =
 				new User_LDAP($this->getAccess($configPrefix), $ocConfig, $notificationManager, $userSession, $userPluginManager);

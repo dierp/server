@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2020 Robin Appelman <robin@icewind.nl>
  *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Robin Appelman <robin@icewind.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -209,7 +208,7 @@ class NewSimpleFile implements ISimpleFile {
 	/**
 	 * Open the file as stream for writing, resulting resource can be operated as stream like the result from php's own fopen
 	 *
-	 * @return resource|bool
+	 * @return resource
 	 * @throws \OCP\Files\NotPermittedException
 	 * @since 14.0.0
 	 */

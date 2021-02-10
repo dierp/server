@@ -88,7 +88,6 @@ ul {
 body {
 	background-color: var(--color-main-background);
 	font-weight: normal;
-	/* bring the default font size up to 15px */
 	font-size: var(--default-font-size);
 	line-height: var(--default-line-height);
 	font-family: var(--font-face);
@@ -151,8 +150,8 @@ body {
 /* SCROLLING */
 
 ::-webkit-scrollbar {
-	width: 12px;
-	height: 12px
+	width: 6px;
+	height: 5px;
 }
 
 ::-webkit-scrollbar-track-piece {
@@ -161,9 +160,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
 	background: var(--color-border-dark);
-	border-radius: var(--border-radius-large);
-	border: 2px solid transparent;
-	background-clip: content-box;
+	border-radius: var(--border-radius);
 }
 
 

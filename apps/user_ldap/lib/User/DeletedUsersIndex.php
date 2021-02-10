@@ -26,7 +26,6 @@
 namespace OCA\User_LDAP\User;
 
 use OCA\User_LDAP\Mapping\UserMapping;
-use OCP\Share\IManager;
 
 /**
  * Class DeletedUsersIndex
@@ -39,6 +38,11 @@ class DeletedUsersIndex {
 	protected $config;
 
 	/**
+	 * @var \OCP\IDBConnection $db
+	 */
+	protected $db;
+
+	/**
 	 * @var \OCA\User_LDAP\Mapping\UserMapping $mapping
 	 */
 	protected $mapping;
@@ -47,13 +51,16 @@ class DeletedUsersIndex {
 	 * @var array $deletedUsers
 	 */
 	protected $deletedUsers;
-	/** @var IManager */
-	private $shareManager;
 
-	public function __construct(\OCP\IConfig $config, UserMapping $mapping, IManager $shareManager) {
+	/**
+	 * @param \OCP\IConfig $config
+	 * @param \OCP\IDBConnection $db
+	 * @param \OCA\User_LDAP\Mapping\UserMapping $mapping
+	 */
+	public function __construct(\OCP\IConfig $config, \OCP\IDBConnection $db, UserMapping $mapping) {
 		$this->config = $config;
+		$this->db = $db;
 		$this->mapping = $mapping;
-		$this->shareManager = $shareManager;
 	}
 
 	/**
@@ -66,7 +73,7 @@ class DeletedUsersIndex {
 
 		$userObjects = [];
 		foreach ($deletedUsers as $user) {
-			$userObjects[] = new OfflineUser($user, $this->config, $this->mapping, $this->shareManager);
+			$userObjects[] = new OfflineUser($user, $this->config, $this->db, $this->mapping);
 		}
 		$this->deletedUsers = $userObjects;
 

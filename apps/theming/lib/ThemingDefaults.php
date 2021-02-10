@@ -12,7 +12,6 @@
  * @author Joachim Bauch <bauch@struktur.de>
  * @author Joas Schilling <coding@schilljs.com>
  * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
- * @author Julien Veyssier <eneiluj@posteo.net>
  * @author Julius Haertl <jus@bitgrid.net>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Lukas Reschke <lukas@statuscode.ch>
@@ -224,7 +223,7 @@ class ThemingDefaults extends \OC_Defaults {
 	 * @return string
 	 */
 	public function getLogo($useSvg = true): string {
-		$logo = $this->config->getAppValue('theming', 'logoMime', '');
+		$logo = $this->config->getAppValue('theming', 'logoMime', false);
 
 		// short cut to avoid setting up the filesystem just to check if the logo is there
 		//
@@ -311,13 +310,13 @@ class ThemingDefaults extends \OC_Defaults {
 		$variables['image-login-background'] = "url('".$this->imageManager->getImageUrl('background')."')";
 		$variables['image-login-plain'] = 'false';
 
-		if ($this->config->getAppValue('theming', 'color', '') !== '') {
+		if ($this->config->getAppValue('theming', 'color', null) !== null) {
 			$variables['color-primary'] = $this->getColorPrimary();
 			$variables['color-primary-text'] = $this->getTextColorPrimary();
 			$variables['color-primary-element'] = $this->util->elementColor($this->getColorPrimary());
 		}
 
-		if ($this->config->getAppValue('theming', 'backgroundMime', '') === 'backgroundColor') {
+		if ($this->config->getAppValue('theming', 'backgroundMime', null) === 'backgroundColor') {
 			$variables['image-login-plain'] = 'true';
 		}
 
@@ -383,7 +382,7 @@ class ThemingDefaults extends \OC_Defaults {
 	 */
 	private function increaseCacheBuster() {
 		$cacheBusterKey = $this->config->getAppValue('theming', 'cachebuster', '0');
-		$this->config->setAppValue('theming', 'cachebuster', (int)$cacheBusterKey + 1);
+		$this->config->setAppValue('theming', 'cachebuster', (int)$cacheBusterKey+1);
 		$this->cacheFactory->createDistributed('theming-')->clear();
 		$this->cacheFactory->createDistributed('imagePath')->clear();
 	}

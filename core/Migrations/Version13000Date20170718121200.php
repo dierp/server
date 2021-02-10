@@ -6,7 +6,6 @@
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Mario Danic <mario@lovelyhq.com>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -30,7 +29,7 @@
 
 namespace OC\Core\Migrations;
 
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\DB\ISchemaWrapper;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
@@ -261,7 +260,6 @@ class Version13000Date20170718121200 extends SimpleMigrationStep {
 			$table->addIndex(['storage', 'mimepart'], 'fs_storage_mimepart');
 			$table->addIndex(['storage', 'size', 'fileid'], 'fs_storage_size');
 			$table->addIndex(['mtime'], 'fs_mtime');
-			$table->addIndex(['size'], 'fs_size');
 		}
 
 		if (!$schema->hasTable('group_user')) {
@@ -1031,7 +1029,7 @@ class Version13000Date20170718121200 extends SimpleMigrationStep {
 			$insert->setParameter('propertypath', (string) $row['propertypath'])
 				->setParameter('propertyname', (string) $row['propertyname'])
 				->setParameter('propertyvalue', (string) $row['propertyvalue'])
-				->setParameter('userid', ($match[2] ?? ''));
+				->setParameter('userid', (string) ($match[2] ?? ''));
 			$insert->execute();
 		}
 	}

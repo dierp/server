@@ -3,14 +3,18 @@
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
+ * @author Brice Maron <brice@bmaron.net>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Roger Szabo <roger.szabo@web.de>
  * @author root <root@localhost.localdomain>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author Vincent Petry <pvince81@owncloud.com>
+ * @author Vinicius Cubas Brand <vinicius@eita.org.br>
  *
  * @license AGPL-3.0
  *
@@ -31,25 +35,23 @@
 namespace OCA\User_LDAP;
 
 use OC\Cache\CappedMemoryCache;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
-use OCP\IDBConnection;
 
 class Helper {
 
 	/** @var IConfig */
 	private $config;
 
-	/** @var IDBConnection */
-	private $connection;
-
 	/** @var CappedMemoryCache */
 	protected $sanitizeDnCache;
 
-	public function __construct(IConfig $config,
-								IDBConnection $connection) {
+	/**
+	 * Helper constructor.
+	 *
+	 * @param IConfig $config
+	 */
+	public function __construct(IConfig $config) {
 		$this->config = $config;
-		$this->connection = $connection;
 		$this->sanitizeDnCache = new CappedMemoryCache(10000);
 	}
 
@@ -74,7 +76,7 @@ class Helper {
 	 * except the default (first) server shall be connected to.
 	 *
 	 */
-	public function getServerConfigurationPrefixes($activeConfigurations = false): array {
+	public function getServerConfigurationPrefixes($activeConfigurations = false) {
 		$referenceConfigkey = 'ldap_configuration_active';
 
 		$keys = $this->getServersConfig($referenceConfigkey);
@@ -158,31 +160,45 @@ class Helper {
 			return false;
 		}
 
-		$query = $this->connection->getQueryBuilder();
-		$query->delete('appconfig')
-			->where($query->expr()->eq('appid', $query->createNamedParameter('user_ldap')))
-			->andWhere($query->expr()->like('configkey', $query->createNamedParameter((string)$prefix . '%')))
-			->andWhere($query->expr()->notIn('configkey', $query->createNamedParameter([
-				'enabled',
-				'installed_version',
-				'types',
-				'bgjUpdateGroupsLastRun',
-			], IQueryBuilder::PARAM_STR_ARRAY)));
-
+		$saveOtherConfigurations = '';
 		if (empty($prefix)) {
-			$query->andWhere($query->expr()->notLike('configkey', $query->createNamedParameter('s%')));
+			$saveOtherConfigurations = 'AND `configkey` NOT LIKE \'s%\'';
 		}
 
-		$deletedRows = $query->execute();
-		return $deletedRows !== 0;
+		$query = \OC_DB::prepare('
+			DELETE
+			FROM `*PREFIX*appconfig`
+			WHERE `configkey` LIKE ?
+				' . $saveOtherConfigurations . '
+				AND `appid` = \'user_ldap\'
+				AND `configkey` NOT IN (\'enabled\', \'installed_version\', \'types\', \'bgjUpdateGroupsLastRun\')
+		');
+		$delRows = $query->execute([$prefix . '%']);
+
+		if ($delRows === null) {
+			return false;
+		}
+
+		if ($delRows === 0) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
 	 * checks whether there is one or more disabled LDAP configurations
+	 *
+	 * @return bool
+	 * @throws \Exception
 	 */
-	public function haveDisabledConfigurations(): bool {
+	public function haveDisabledConfigurations() {
 		$all = $this->getServerConfigurationPrefixes(false);
 		$active = $this->getServerConfigurationPrefixes(true);
+
+		if (!is_array($all) || !is_array($active)) {
+			throw new \Exception('Unexpected Return Value');
+		}
 
 		return count($all) !== count($active) || count($all) === 0;
 	}
@@ -207,6 +223,18 @@ class Helper {
 		}
 
 		return $domain;
+	}
+
+	/**
+	 *
+	 * Set the LDAPProvider in the config
+	 *
+	 */
+	public function setLDAPProvider() {
+		$current = \OC::$server->getConfig()->getSystemValue('ldapProviderFactory', null);
+		if (is_null($current)) {
+			\OC::$server->getConfig()->setSystemValue('ldapProviderFactory', LDAPProviderFactory::class);
+		}
 	}
 
 	/**
@@ -284,7 +312,20 @@ class Helper {
 			throw new \Exception('key uid is expected to be set in $param');
 		}
 
-		$userBackend = \OC::$server->get(User_Proxy::class);
+		//ain't it ironic?
+		$helper = new Helper(\OC::$server->getConfig());
+
+		$configPrefixes = $helper->getServerConfigurationPrefixes(true);
+		$ldapWrapper = new LDAP();
+		$ocConfig = \OC::$server->getConfig();
+		$notificationManager = \OC::$server->getNotificationManager();
+
+		$userSession = \OC::$server->getUserSession();
+		$userPluginManager = \OC::$server->query(UserPluginManager::class);
+
+		$userBackend = new User_Proxy(
+			$configPrefixes, $ldapWrapper, $ocConfig, $notificationManager, $userSession, $userPluginManager
+		);
 		$uid = $userBackend->loginName2UserName($param['uid']);
 		if ($uid !== false) {
 			$param['uid'] = $uid;

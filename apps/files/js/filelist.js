@@ -252,8 +252,7 @@
 				this._filesConfig = OCA.Files.App.getFilesConfig();
 			} else {
 				this._filesConfig = new OC.Backbone.Model({
-					'showhidden': false,
-					'cropimagepreviews': true
+					'showhidden': false
 				});
 			}
 
@@ -290,10 +289,6 @@
 						// hiding files could make the page too small, need to try rendering next page
 						self._onScroll();
 					}
-				});
-
-				this._filesConfig.on('change:cropimagepreviews', function() {
-					self.reload();
 				});
 
 				this.$el.toggleClass('hide-hidden-files', !this._filesConfig.get('showhidden'));
@@ -2220,12 +2215,6 @@
 			urlSpec.y = Math.ceil(urlSpec.y);
 			urlSpec.forceIcon = 0;
 
-			/**
-			 * Images are cropped to a square by default. Append a=1 to the URL
-			 *  if the user wants to see images with original aspect ratio.
-			 */
-			urlSpec.a = this._filesConfig.get('cropimagepreviews') ? 0 : 1;
-
 			if (typeof urlSpec.fileId !== 'undefined') {
 				delete urlSpec.file;
 				return OC.generateUrl('/core/preview?') + $.param(urlSpec);
@@ -3711,22 +3700,7 @@
 			console.warn('registerTabView is deprecated! It will be removed in nextcloud 20.');
 			const enabled = tabView.canDisplay || undefined
 			if (tabView.id) {
-				OCA.Files.Sidebar.registerTab(new OCA.Files.Sidebar.Tab({
-					id: tabView.id,
-					name: tabView.getLabel(),
-					icon: tabView.getIcon(),
-					mount: function(el, fileInfo) {
-						tabView.setFileInfo(new OCA.Files.FileInfoModel(fileInfo))
-						el.appendChild(tabView.el)
-					},
-					update: function(fileInfo) {
-						tabView.setFileInfo(new OCA.Files.FileInfoModel(fileInfo))
-					},
-					destroy: function() {
-						tabView.el.remove()
-					},
-					enabled: enabled
-				}))
+				OCA.Files.Sidebar.registerTab(new OCA.Files.Sidebar.Tab(tabView.id, tabView, enabled, true))
 			}
 		},
 

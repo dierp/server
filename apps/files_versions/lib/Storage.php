@@ -20,7 +20,7 @@
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Victor Dubiniuk <dubiniuk@owncloud.com>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -53,14 +53,13 @@ use OCA\Files_Versions\Command\Expire;
 use OCA\Files_Versions\Events\CreateVersionEvent;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCP\Files\NotFoundException;
-use OCP\Files\StorageNotAvailableException;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
 use OCP\User;
 
 class Storage {
-	public const DEFAULTENABLED = true;
-	public const DEFAULTMAXSIZE = 50; // unit: percentage; 50% of available disk space/quota
+	public const DEFAULTENABLED=true;
+	public const DEFAULTMAXSIZE=50; // unit: percentage; 50% of available disk space/quota
 	public const VERSIONS_ROOT = 'files_versions/';
 
 	public const DELETE_TRIGGER_MASTER_REMOVED = 0;
@@ -352,7 +351,7 @@ class Storage {
 			$versionCreated = true;
 		}
 
-		$fileToRestore = 'files_versions' . $filename . '.v' . $revision;
+		$fileToRestore =  'files_versions' . $filename . '.v' . $revision;
 
 		// Restore encrypted version of the old file for the newly restored file
 		// This has to happen manually here since the file is manually copied below
@@ -503,7 +502,7 @@ class Storage {
 
 		$toDelete = [];
 		foreach (array_reverse($versions['all']) as $key => $version) {
-			if ((int)$version['version'] < $threshold) {
+			if ((int)$version['version'] <$threshold) {
 				$toDelete[$key] = $version;
 			} else {
 				//Versions are sorted by time - nothing mo to iterate.
@@ -725,14 +724,8 @@ class Storage {
 
 			\OC_Util::setupFS($uid);
 
-			try {
-				if (!Filesystem::file_exists($filename)) {
-					return false;
-				}
-			} catch (StorageNotAvailableException $e) {
-				// if we can't check that the file hasn't been deleted we can only assume that it hasn't
-				// note that this `StorageNotAvailableException` is about the file the versions originate from,
-				// not the storage that the versions are stored on
+			if (!Filesystem::file_exists($filename)) {
+				return false;
 			}
 
 			if (empty($filename)) {
@@ -809,7 +802,7 @@ class Storage {
 			// Check if enough space is available after versions are rearranged.
 			// If not we delete the oldest versions until we meet the size limit for versions,
 			// but always keep the two latest versions
-			$numOfVersions = count($allVersions) - 2 ;
+			$numOfVersions = count($allVersions) -2 ;
 			$i = 0;
 			// sort oldest first and make sure that we start at the first element
 			ksort($allVersions);

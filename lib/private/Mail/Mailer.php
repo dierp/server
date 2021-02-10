@@ -12,7 +12,6 @@ declare(strict_types=1);
  * @author Jared Boone <jared.boone@gmail.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Julius Härtl <jus@bitgrid.net>
- * @author kevin147147 <kevintamool@gmail.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -60,9 +59,9 @@ use OCP\Mail\Events\BeforeMessageSent;
  * 	$mailer = \OC::$server->getMailer();
  * 	$message = $mailer->createMessage();
  * 	$message->setSubject('Your Subject');
- * 	$message->setFrom(array('cloud@domain.org' => 'ownCloud Notifier'));
- * 	$message->setTo(array('recipient@domain.org' => 'Recipient'));
- * 	$message->setBody('The message text', 'text/html');
+ * 	$message->setFrom(array('cloud@domain.org' => 'ownCloud Notifier');
+ * 	$message->setTo(array('recipient@domain.org' => 'Recipient');
+ * 	$message->setBody('The message text');
  * 	$mailer->send($message);
  *
  * This message can then be passed to send() of \OC\Mail\Mailer

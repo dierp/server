@@ -27,11 +27,10 @@ declare(strict_types=1);
 namespace OCA\Accessibility\Service;
 
 use OCA\Accessibility\AppInfo\Application;
-use OCP\AppFramework\Services\InitialStateProvider;
 use OCP\IConfig;
 use OCP\IUserSession;
 
-class JSDataService extends InitialStateProvider {
+class JSDataService implements \JsonSerializable {
 	/** @var IUserSession */
 	private $userSession;
 	/** @var IConfig */
@@ -45,11 +44,7 @@ class JSDataService extends InitialStateProvider {
 		$this->config = $config;
 	}
 
-	public function getKey(): string {
-		return 'data';
-	}
-
-	public function getData() {
+	public function jsonSerialize() {
 		$user = $this->userSession->getUser();
 
 		if ($user === null) {

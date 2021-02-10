@@ -26,7 +26,7 @@
  */
 namespace OCA\DAV\Migration;
 
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;

@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Julius Härtl <jus@bitgrid.net>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -30,9 +29,7 @@ declare(strict_types=1);
 namespace OCP\AppFramework\Bootstrap;
 
 use OCP\AppFramework\IAppContainer;
-use OCP\Capabilities\ICapability;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Files\Template\ICustomTemplateProvider;
 use OCP\IContainer;
 
 /**
@@ -45,7 +42,6 @@ interface IRegistrationContext {
 
 	/**
 	 * @param string $capability
-	 * @psalm-param class-string<ICapability> $capability
 	 * @see IAppContainer::registerCapability
 	 *
 	 * @since 20.0.0
@@ -171,42 +167,4 @@ interface IRegistrationContext {
 	 * @since 20.0.0
 	 */
 	public function registerAlternativeLogin(string $class): void;
-
-	/**
-	 * Register an initialstate provider
-	 *
-	 * It is allowed to register more than one provider per app.
-	 *
-	 * @param string $class
-	 * @psalm-param class-string<\OCP\AppFramework\Services\InitialStateProvider> $class
-	 *
-	 * @return void
-	 *
-	 * @since 21.0.0
-	 */
-	public function registerInitialStateProvider(string $class): void;
-
-	/**
-	 * Register a well known protocol handler
-	 *
-	 * It is allowed to register more than one handler per app.
-	 *
-	 * @param string $class
-	 * @psalm-param class-string<\OCP\Http\WellKnown\IHandler> $class
-	 *
-	 * @return void
-	 *
-	 * @since 21.0.0
-	 */
-	public function registerWellKnownHandler(string $class): void;
-
-	/**
-	 * Register a custom template provider class that is able to inject custom templates
-	 * in addition to the user defined ones
-	 *
-	 * @param string $providerClass
-	 * @psalm-param class-string<ICustomTemplateProvider> $providerClass
-	 * @since 21.0.0
-	 */
-	public function registerTemplateProvider(string $providerClass): void;
 }

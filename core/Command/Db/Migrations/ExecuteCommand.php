@@ -23,10 +23,11 @@
 
 namespace OC\Core\Command\Db\Migrations;
 
-use OC\DB\Connection;
 use OC\DB\MigrationService;
 use OC\Migration\ConsoleOutput;
+use OCP\App\IAppManager;
 use OCP\IConfig;
+use OCP\IDBConnection;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Command\Command;
@@ -36,19 +37,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ExecuteCommand extends Command implements CompletionAwareInterface {
 
-	/** @var Connection */
+	/** @var IDBConnection */
 	private $connection;
 
 	/** @var IConfig */
 	private $config;
 
+	/** @var IAppManager */
+	protected $appManager;
+
 	/**
 	 * ExecuteCommand constructor.
 	 *
-	 * @param Connection $connection
+	 * @param IDBConnection $connection
 	 * @param IConfig $config
+	 * @param IAppManager $appManager
 	 */
-	public function __construct(Connection $connection, IConfig $config) {
+	public function __construct(IDBConnection $connection, IAppManager $appManager, IConfig $config) {
 		$this->connection = $connection;
 		$this->config = $config;
 

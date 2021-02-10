@@ -56,7 +56,7 @@
 		 * @param {int|int[]} expectedStatus the expected HTTP status to be returned by the URL, 207 by default
 		 * @return $.Deferred object resolved with an array of error messages
 		 */
-		checkWellKnownUrl: function(verb, url, placeholderUrl, runCheck, expectedStatus, checkCustomHeader) {
+		checkWellKnownUrl: function(url, placeholderUrl, runCheck, expectedStatus) {
 			if (expectedStatus === undefined) {
 				expectedStatus = [207];
 			}
@@ -73,8 +73,7 @@
 			}
 			var afterCall = function(xhr) {
 				var messages = [];
-				var customWellKnown = xhr.getResponseHeader('X-NEXTCLOUD-WELL-KNOWN')
-				if (expectedStatus.indexOf(xhr.status) === -1 || (checkCustomHeader && !customWellKnown)) {
+				if (expectedStatus.indexOf(xhr.status) === -1) {
 					var docUrl = placeholderUrl.replace('PLACEHOLDER', 'admin-setup-well-known-URL');
 					messages.push({
 						msg: t('core', 'Your web server is not properly set up to resolve "{url}". Further information can be found in the <a target="_blank" rel="noreferrer noopener" href="{docLink}">documentation</a>.', { docLink: docUrl, url: url }),
@@ -85,7 +84,7 @@
 			};
 
 			$.ajax({
-				type: verb,
+				type: 'PROPFIND',
 				url: url,
 				complete: afterCall,
 				allowAuthErrors: true
@@ -215,14 +214,6 @@
 						messages.push({
 							msg: t('core', 'If your installation is not installed at the root of the domain and uses system cron, there can be issues with the URL generation. To avoid these problems, please set the "overwrite.cli.url" option in your config.php file to the webroot path of your installation (suggestion: "{suggestedOverwriteCliURL}")', {suggestedOverwriteCliURL: data.suggestedOverwriteCliURL}),
 							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
-						});
-					}
-					if (!data.isDefaultPhoneRegionSet) {
-						messages.push({
-							msg: t('core', 'Your installation has no default phone region set. This is required to validate phone numbers in the profile settings without a country code. To allow numbers without a country code, please add "default_phone_region" with the respective {linkstart}ISO 3166-1 code ↗{linkend} of the region to your config file.')
-								.replace('{linkstart}', '<a target="_blank" rel="noreferrer noopener" class="external" href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements">')
-								.replace('{linkend}', '</a>'),
-							type: OC.SetupChecks.MESSAGE_TYPE_INFO
 						});
 					}
 					if (data.cronErrors.length > 0) {
@@ -409,15 +400,6 @@
 							type: OC.SetupChecks.MESSAGE_TYPE_INFO
 						})
 					}
-					if (data.imageMagickLacksSVGSupport) {
-						messages.push({
-							msg: t(
-								'core',
-								'Module php-imagick in this instance has no SVG support. For better compatibility it is recommended to install it.'
-							),
-							type: OC.SetupChecks.MESSAGE_TYPE_INFO
-						})
-					}
 					if (data.pendingBigIntConversionColumns.length > 0) {
 						var listOfPendingBigIntConversionColumns = "";
 						data.pendingBigIntConversionColumns.forEach(function(element){
@@ -450,13 +432,25 @@
 							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
 						})
 					}
+					if (data.isPHPMailerUsed) {
+						messages.push({
+							msg: t(
+								'core',
+								'Use of the the built in php mailer is no longer supported. <a target="_blank" rel="noreferrer noopener" href="{docLink}">Please update your email server settings ↗<a/>.',
+								{
+									docLink: data.mailSettingsDocumentation,
+								}
+							),
+							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
+						});
+					}
 					if (!data.isMemoryLimitSufficient) {
 						messages.push({
 							msg: t(
 								'core',
 								'The PHP memory limit is below the recommended value of 512MB.'
 							),
-							type: OC.SetupChecks.MESSAGE_TYPE_ERROR
+							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
 						})
 					}
 
@@ -512,7 +506,6 @@
 					OC.SetupChecks.addGenericSetupCheck(data, 'OCA\\Settings\\SetupChecks\\PhpDefaultCharset', messages)
 					OC.SetupChecks.addGenericSetupCheck(data, 'OCA\\Settings\\SetupChecks\\PhpOutputBuffering', messages)
 					OC.SetupChecks.addGenericSetupCheck(data, 'OCA\\Settings\\SetupChecks\\LegacySSEKeyFormat', messages)
-					OC.SetupChecks.addGenericSetupCheck(data, 'OCA\\Settings\\SetupChecks\\CheckUserCertificates', messages)
 					OC.SetupChecks.addGenericSetupCheck(data, 'OCA\\Settings\\SetupChecks\\SupportedDatabase', messages)
 
 				} else {
@@ -545,15 +538,6 @@
 			var message = setupCheck.description;
 			if (setupCheck.linkToDocumentation) {
 				message += ' ' + t('core', 'For more details see the <a target="_blank" rel="noreferrer noopener" href="{docLink}">documentation</a>.', {docLink: setupCheck.linkToDocumentation});
-			}
-			if (setupCheck.elements) {
-				message += '<br><ul>'
-				setupCheck.elements.forEach(function(element){
-					message += '<li>';
-					message += element
-					message += '</li>';
-				});
-				message += '</ul>'
 			}
 
 			if (!setupCheck.pass) {

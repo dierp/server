@@ -27,9 +27,7 @@
 
 namespace OCA\User_LDAP\Mapping;
 
-use Doctrine\DBAL\Exception;
 use OC\DB\QueryBuilder\QueryBuilder;
-use OCP\DB\IPreparedStatement;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 /**
@@ -98,32 +96,24 @@ abstract class AbstractMapping {
 			WHERE `' . $compareCol . '` = ?
 		');
 
-		try {
-			$res = $query->execute([$search]);
-			$data = $res->fetchOne();
-			$res->closeCursor();
-			return $data;
-		} catch (Exception $e) {
-			return false;
+		$res = $query->execute([$search]);
+		if ($res !== false) {
+			return $query->fetchColumn();
 		}
+
+		return false;
 	}
 
 	/**
 	 * Performs a DELETE or UPDATE query to the database.
 	 *
-	 * @param IPreparedStatement $statement
+	 * @param \Doctrine\DBAL\Driver\Statement $query
 	 * @param array $parameters
 	 * @return bool true if at least one row was modified, false otherwise
 	 */
-	protected function modify(IPreparedStatement $statement, $parameters) {
-		try {
-			$result = $statement->execute($parameters);
-			$updated = $result->rowCount() > 0;
-			$result->closeCursor();
-			return $updated;
-		} catch (Exception $e) {
-			return false;
-		}
+	protected function modify($query, $parameters) {
+		$result = $query->execute($parameters);
+		return ($result === true && $query->rowCount() > 0);
 	}
 
 	/**
@@ -150,13 +140,13 @@ abstract class AbstractMapping {
 	 */
 	public function setDNbyUUID($fdn, $uuid) {
 		$oldDn = $this->getDnByUUID($uuid);
-		$statement = $this->dbc->prepare('
+		$query = $this->dbc->prepare('
 			UPDATE `' . $this->getTableName() . '`
 			SET `ldap_dn` = ?
 			WHERE `directory_uuid` = ?
 		');
 
-		$r = $this->modify($statement, [$fdn, $uuid]);
+		$r = $this->modify($query, [$fdn, $uuid]);
 
 		if ($r && is_string($oldDn) && isset($this->cache[$oldDn])) {
 			$this->cache[$fdn] = $this->cache[$oldDn];
@@ -176,7 +166,7 @@ abstract class AbstractMapping {
 	 * @return bool
 	 */
 	public function setUUIDbyDN($uuid, $fdn) {
-		$statement = $this->dbc->prepare('
+		$query = $this->dbc->prepare('
 			UPDATE `' . $this->getTableName() . '`
 			SET `directory_uuid` = ?
 			WHERE `ldap_dn` = ?
@@ -184,7 +174,7 @@ abstract class AbstractMapping {
 
 		unset($this->cache[$fdn]);
 
-		return $this->modify($statement, [$uuid, $fdn]);
+		return $this->modify($query, [$uuid, $fdn]);
 	}
 
 	/**
@@ -266,20 +256,18 @@ abstract class AbstractMapping {
 	 * @return string[]
 	 */
 	public function getNamesBySearch($search, $prefixMatch = "", $postfixMatch = "") {
-		$statement = $this->dbc->prepare('
+		$query = $this->dbc->prepare('
 			SELECT `owncloud_name`
 			FROM `' . $this->getTableName() . '`
 			WHERE `owncloud_name` LIKE ?
 		');
 
-		try {
-			$res = $statement->execute([$prefixMatch . $this->dbc->escapeLikeParameter($search) . $postfixMatch]);
-		} catch (Exception $e) {
-			return [];
-		}
+		$res = $query->execute([$prefixMatch . $this->dbc->escapeLikeParameter($search) . $postfixMatch]);
 		$names = [];
-		while ($row = $res->fetch()) {
-			$names[] = $row['owncloud_name'];
+		if ($res !== false) {
+			while ($row = $query->fetch()) {
+				$names[] = $row['owncloud_name'];
+			}
 		}
 		return $names;
 	}
@@ -376,15 +364,15 @@ abstract class AbstractMapping {
 	 * @return bool
 	 */
 	public function unmap($name) {
-		$statement = $this->dbc->prepare('
+		$query = $this->dbc->prepare('
 			DELETE FROM `' . $this->getTableName() . '`
 			WHERE `owncloud_name` = ?');
 
-		return $this->modify($statement, [$name]);
+		return $this->modify($query, [$name]);
 	}
 
 	/**
-	 * Truncates the mapping table
+	 * Truncate's the mapping table
 	 *
 	 * @return bool
 	 */
@@ -392,13 +380,7 @@ abstract class AbstractMapping {
 		$sql = $this->dbc
 			->getDatabasePlatform()
 			->getTruncateTableSQL('`' . $this->getTableName() . '`');
-		try {
-			$this->dbc->executeQuery($sql);
-
-			return true;
-		} catch (Exception $e) {
-			return false;
-		}
+		return $this->dbc->prepare($sql)->execute();
 	}
 
 	/**
@@ -416,7 +398,7 @@ abstract class AbstractMapping {
 			->from($this->getTableName());
 		$cursor = $picker->execute();
 		$result = true;
-		while ($id = $cursor->fetchOne()) {
+		while ($id = $cursor->fetchColumn(0)) {
 			$preCallback($id);
 			if ($isUnmapped = $this->unmap($id)) {
 				$postCallback($id);
@@ -437,7 +419,7 @@ abstract class AbstractMapping {
 		$query = $qb->select($qb->func()->count('ldap_dn'))
 			->from($this->getTableName());
 		$res = $query->execute();
-		$count = $res->fetchOne();
+		$count = $res->fetchColumn();
 		$res->closeCursor();
 		return (int)$count;
 	}

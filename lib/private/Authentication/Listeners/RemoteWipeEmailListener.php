@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright 2019 Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -33,12 +32,12 @@ use OC\Authentication\Events\RemoteWipeStarted;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IL10N;
+use OCP\ILogger;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\L10N\IFactory as IL10nFactory;
 use OCP\Mail\IMailer;
 use OCP\Mail\IMessage;
-use Psr\Log\LoggerInterface;
 use function substr;
 
 /**
@@ -55,13 +54,13 @@ class RemoteWipeEmailListener implements IEventListener {
 	/** @var IL10N */
 	private $l10n;
 
-	/** @var LoggerInterface */
+	/** @var ILogger */
 	private $logger;
 
 	public function __construct(IMailer $mailer,
 								IUserManager $userManager,
 								IL10nFactory $l10nFactory,
-								LoggerInterface $logger) {
+								ILogger $logger) {
 		$this->mailer = $mailer;
 		$this->userManager = $userManager;
 		$this->l10n = $l10nFactory->get('core');
@@ -89,8 +88,9 @@ class RemoteWipeEmailListener implements IEventListener {
 					$this->getWipingStartedMessage($event, $user)
 				);
 			} catch (Exception $e) {
-				$this->logger->error("Could not send remote wipe started email to <$uid>", [
-					'exception' => $e,
+				$this->logger->logException($e, [
+					'message' => "Could not send remote wipe started email to <$uid>",
+					'level' => ILogger::ERROR,
 				]);
 			}
 		} elseif ($event instanceof RemoteWipeFinished) {
@@ -110,8 +110,9 @@ class RemoteWipeEmailListener implements IEventListener {
 					$this->getWipingFinishedMessage($event, $user)
 				);
 			} catch (Exception $e) {
-				$this->logger->error("Could not send remote wipe finished email to <$uid>", [
-					'exception' => $e,
+				$this->logger->logException($e, [
+					'message' => "Could not send remote wipe finished email to <$uid>",
+					'level' => ILogger::ERROR,
 				]);
 			}
 		}

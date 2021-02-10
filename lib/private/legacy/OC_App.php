@@ -33,7 +33,7 @@ declare(strict_types=1);
  * @author Sebastian Wessalowski <sebastian@wessalowski.org>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -80,9 +80,6 @@ class OC_App {
 	/**
 	 * clean the appId
 	 *
-	 * @psalm-taint-escape file
-	 * @psalm-taint-escape include
-	 *
 	 * @param string $app AppId that needs to be cleaned
 	 * @return string
 	 */
@@ -121,12 +118,9 @@ class OC_App {
 
 		// Add each apps' folder as allowed class path
 		foreach ($apps as $app) {
-			// If the app is already loaded then autoloading it makes no sense
-			if (!isset(self::$loadedApps[$app])) {
-				$path = self::getAppPath($app);
-				if ($path !== false) {
-					self::registerAutoloading($app, $path);
-				}
+			$path = self::getAppPath($app);
+			if ($path !== false) {
+				self::registerAutoloading($app, $path);
 			}
 		}
 
@@ -518,8 +512,6 @@ class OC_App {
 	 * Get the directory for the given app.
 	 * If the app is defined in multiple directories, the first one is taken. (false if not found)
 	 *
-	 * @psalm-taint-specialize
-	 *
 	 * @param string $appId
 	 * @return string|false
 	 * @deprecated 11.0.0 use \OC::$server->getAppManager()->getAppPath()
@@ -698,11 +690,11 @@ class OC_App {
 		$bootstrapCoordinator = \OC::$server->query(Coordinator::class);
 
 		foreach ($bootstrapCoordinator->getRegistrationContext()->getAlternativeLogins() as $registration) {
-			if (!in_array(IAlternativeLogin::class, class_implements($registration->getService()), true)) {
+			if (!in_array(IAlternativeLogin::class, class_implements($registration['class']), true)) {
 				\OC::$server->getLogger()->error('Alternative login option {option} does not implement {interface} and is therefore ignored.', [
-					'option' => $registration->getService(),
+					'option' => $registration['class'],
 					'interface' => IAlternativeLogin::class,
-					'app' => $registration->getAppId(),
+					'app' => $registration['app'],
 				]);
 				continue;
 			}
@@ -974,22 +966,13 @@ class OC_App {
 		\OC::$server->getAppManager()->clearAppsCache();
 		$appData = self::getAppInfo($appId);
 
-		$ignoreMaxApps = \OC::$server->getConfig()->getSystemValue('app_install_overwrite', []);
-		$ignoreMax = in_array($appId, $ignoreMaxApps, true);
-		\OC_App::checkAppDependencies(
-			\OC::$server->getConfig(),
-			\OC::$server->getL10N('core'),
-			$appData,
-			$ignoreMax
-		);
-
 		self::registerAutoloading($appId, $appPath, true);
 		self::executeRepairSteps($appId, $appData['repair-steps']['pre-migration']);
 
 		if (file_exists($appPath . '/appinfo/database.xml')) {
 			OC_DB::updateDbFromStructure($appPath . '/appinfo/database.xml');
 		} else {
-			$ms = new MigrationService($appId, \OC::$server->get(\OC\DB\Connection::class));
+			$ms = new MigrationService($appId, \OC::$server->getDatabaseConnection());
 			$ms->migrate();
 		}
 
@@ -999,6 +982,11 @@ class OC_App {
 		\OC::$server->getAppManager()->clearAppsCache();
 		\OC::$server->getAppManager()->getAppVersion($appId, false);
 
+		// run upgrade code
+		if (file_exists($appPath . '/appinfo/update.php')) {
+			self::loadApp($appId);
+			include $appPath . '/appinfo/update.php';
+		}
 		self::setupBackgroundJobs($appData['background-jobs']);
 
 		//set remote/public handlers
@@ -1130,7 +1118,7 @@ class OC_App {
 					$similarLangFallback = $option['@value'];
 				} elseif (strpos($attributeLang, $similarLang . '_') === 0) {
 					if ($similarLangFallback === false) {
-						$similarLangFallback = $option['@value'];
+						$similarLangFallback =  $option['@value'];
 					}
 				}
 			} else {

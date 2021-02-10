@@ -8,8 +8,6 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Julius Härtl <jus@bitgrid.net>
- * @author Robin Windey <ro.windey@gmail.com>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -34,59 +32,42 @@ use Closure;
 use OC\Support\CrashReport\Registry;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCP\AppFramework\Middleware;
-use OCP\Authentication\IAlternativeLogin;
-use OCP\Capabilities\ICapability;
 use OCP\Dashboard\IManager;
-use OCP\Dashboard\IWidget;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Files\Template\ICustomTemplateProvider;
-use OCP\Http\WellKnown\IHandler;
 use OCP\ILogger;
-use OCP\Search\IProvider;
-use OCP\Support\CrashReport\IReporter;
 use Throwable;
 
 class RegistrationContext {
 
-	/** @var ServiceRegistration<ICapability>[] */
+	/** @var array[] */
 	private $capabilities = [];
 
-	/** @var ServiceRegistration<IReporter>[] */
+	/** @var array[] */
 	private $crashReporters = [];
 
-	/** @var ServiceRegistration<IWidget>[] */
+	/** @var array[] */
 	private $dashboardPanels = [];
 
-	/** @var ServiceFactoryRegistration[] */
+	/** @var array[] */
 	private $services = [];
 
-	/** @var ServiceAliasRegistration[] */
+	/** @var array[] */
 	private $aliases = [];
 
-	/** @var ParameterRegistration[] */
+	/** @var array[] */
 	private $parameters = [];
 
-	/** @var EventListenerRegistration[] */
+	/** @var array[] */
 	private $eventListeners = [];
 
-	/** @var ServiceRegistration<Middleware>[] */
+	/** @var array[] */
 	private $middlewares = [];
 
-	/** @var ServiceRegistration<IProvider>[] */
+	/** @var array[] */
 	private $searchProviders = [];
 
-	/** @var ServiceRegistration<IAlternativeLogin>[] */
-	private $alternativeLogins = [];
-
 	/** @var array[] */
-	private $initialStates = [];
-
-	/** @var ServiceRegistration<IHandler>[] */
-	private $wellKnownHandlers = [];
-
-	/** @var ServiceRegistration<ICustomTemplateProvider>[] */
-	private $templateProviders = [];
+	private $alternativeLogins = [];
 
 	/** @var ILogger */
 	private $logger;
@@ -183,95 +164,80 @@ class RegistrationContext {
 					$class
 				);
 			}
-
-			public function registerInitialStateProvider(string $class): void {
-				$this->context->registerInitialState(
-					$this->appId,
-					$class
-				);
-			}
-
-			public function registerWellKnownHandler(string $class): void {
-				$this->context->registerWellKnown(
-					$this->appId,
-					$class
-				);
-			}
-
-			public function registerTemplateProvider(string $providerClass): void {
-				$this->context->registerTemplateProvider(
-					$this->appId,
-					$providerClass
-				);
-			}
 		};
 	}
 
-	/**
-	 * @psalm-param class-string<ICapability> $capability
-	 */
 	public function registerCapability(string $appId, string $capability): void {
-		$this->capabilities[] = new ServiceRegistration($appId, $capability);
+		$this->capabilities[] = [
+			'appId' => $appId,
+			'capability' => $capability
+		];
 	}
 
-	/**
-	 * @psalm-param class-string<IReporter> $capability
-	 */
 	public function registerCrashReporter(string $appId, string $reporterClass): void {
-		$this->crashReporters[] = new ServiceRegistration($appId, $reporterClass);
+		$this->crashReporters[] = [
+			'appId' => $appId,
+			'class' => $reporterClass,
+		];
 	}
 
-	/**
-	 * @psalm-param class-string<IWidget> $capability
-	 */
 	public function registerDashboardPanel(string $appId, string $panelClass): void {
-		$this->dashboardPanels[] = new ServiceRegistration($appId, $panelClass);
+		$this->dashboardPanels[] = [
+			'appId' => $appId,
+			'class' => $panelClass
+		];
 	}
 
 	public function registerService(string $appId, string $name, callable $factory, bool $shared = true): void {
-		$this->services[] = new ServiceFactoryRegistration($appId, $name, $factory, $shared);
+		$this->services[] = [
+			"appId" => $appId,
+			"name" => $name,
+			"factory" => $factory,
+			"shared" => $shared,
+		];
 	}
 
 	public function registerServiceAlias(string $appId, string $alias, string $target): void {
-		$this->aliases[] = new ServiceAliasRegistration($appId, $alias, $target);
+		$this->aliases[] = [
+			"appId" => $appId,
+			"alias" => $alias,
+			"target" => $target,
+		];
 	}
 
 	public function registerParameter(string $appId, string $name, $value): void {
-		$this->parameters[] = new ParameterRegistration($appId, $name, $value);
+		$this->parameters[] = [
+			"appId" => $appId,
+			"name" => $name,
+			"value" => $value,
+		];
 	}
 
 	public function registerEventListener(string $appId, string $event, string $listener, int $priority = 0): void {
-		$this->eventListeners[] = new EventListenerRegistration($appId, $event, $listener, $priority);
+		$this->eventListeners[] = [
+			"appId" => $appId,
+			"event" => $event,
+			"listener" => $listener,
+			"priority" => $priority,
+		];
 	}
 
-	/**
-	 * @psalm-param class-string<Middleware> $class
-	 */
 	public function registerMiddleware(string $appId, string $class): void {
-		$this->middlewares[] = new ServiceRegistration($appId, $class);
+		$this->middlewares[] = [
+			"appId" => $appId,
+			"class" => $class,
+		];
 	}
 
 	public function registerSearchProvider(string $appId, string $class) {
-		$this->searchProviders[] = new ServiceRegistration($appId, $class);
-	}
-
-	public function registerAlternativeLogin(string $appId, string $class): void {
-		$this->alternativeLogins[] = new ServiceRegistration($appId, $class);
-	}
-
-	public function registerInitialState(string $appId, string $class): void {
-		$this->initialStates[] = [
+		$this->searchProviders[] = [
 			'appId' => $appId,
 			'class' => $class,
 		];
 	}
 
-	public function registerWellKnown(string $appId, string $class): void {
-		$this->wellKnownHandlers[] = new ServiceRegistration($appId, $class);
-	}
-
-	public function registerTemplateProvider(string $appId, string $class): void {
-		$this->templateProviders[] = [
+	public function registerAlternativeLogin(string $appId, string $class): void {
+		$this->alternativeLogins[] = [
 			'appId' => $appId,
 			'class' => $class,
 		];
@@ -281,13 +247,13 @@ class RegistrationContext {
 	 * @param App[] $apps
 	 */
 	public function delegateCapabilityRegistrations(array $apps): void {
-		while (($registration = array_shift($this->capabilities)) !== null) {
+		foreach ($this->capabilities as $registration) {
 			try {
-				$apps[$registration->getAppId()]
+				$apps[$registration['appId']]
 					->getContainer()
-					->registerCapability($registration->getService());
+					->registerCapability($registration['capability']);
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during capability registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -300,11 +266,11 @@ class RegistrationContext {
 	 * @param App[] $apps
 	 */
 	public function delegateCrashReporterRegistrations(array $apps, Registry $registry): void {
-		while (($registration = array_shift($this->crashReporters)) !== null) {
+		foreach ($this->crashReporters as $registration) {
 			try {
-				$registry->registerLazy($registration->getService());
+				$registry->registerLazy($registration['class']);
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during crash reporter registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -317,11 +283,11 @@ class RegistrationContext {
 	 * @param App[] $apps
 	 */
 	public function delegateDashboardPanelRegistrations(array $apps, IManager $dashboardManager): void {
-		while (($panel = array_shift($this->dashboardPanels)) !== null) {
+		foreach ($this->dashboardPanels as $panel) {
 			try {
-				$dashboardManager->lazyRegisterWidget($panel->getService());
+				$dashboardManager->lazyRegisterWidget($panel['class']);
 			} catch (Throwable $e) {
-				$appId = $panel->getAppId();
+				$appId = $panel['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during dashboard registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -331,15 +297,22 @@ class RegistrationContext {
 	}
 
 	public function delegateEventListenerRegistrations(IEventDispatcher $eventDispatcher): void {
-		while (($registration = array_shift($this->eventListeners)) !== null) {
+		foreach ($this->eventListeners as $registration) {
 			try {
-				$eventDispatcher->addServiceListener(
-					$registration->getEvent(),
-					$registration->getService(),
-					$registration->getPriority()
-				);
+				if (isset($registration['priority'])) {
+					$eventDispatcher->addServiceListener(
+						$registration['event'],
+						$registration['listener'],
+						$registration['priority']
+					);
+				} else {
+					$eventDispatcher->addServiceListener(
+						$registration['event'],
+						$registration['listener']
+					);
+				}
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during event listener registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -352,20 +325,20 @@ class RegistrationContext {
 	 * @param App[] $apps
 	 */
 	public function delegateContainerRegistrations(array $apps): void {
-		while (($registration = array_shift($this->services)) !== null) {
+		foreach ($this->services as $registration) {
 			try {
 				/**
 				 * Register the service and convert the callable into a \Closure if necessary
 				 */
-				$apps[$registration->getAppId()]
+				$apps[$registration['appId']]
 					->getContainer()
 					->registerService(
-						$registration->getName(),
-						Closure::fromCallable($registration->getFactory()),
-						$registration->isShared()
+						$registration['name'],
+						Closure::fromCallable($registration['factory']),
+						$registration['shared'] ?? true
 					);
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during service registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -375,14 +348,14 @@ class RegistrationContext {
 
 		foreach ($this->aliases as $registration) {
 			try {
-				$apps[$registration->getAppId()]
+				$apps[$registration['appId']]
 					->getContainer()
 					->registerAlias(
-						$registration->getAlias(),
-						$registration->getTarget()
+						$registration['alias'],
+						$registration['target']
 					);
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during service alias registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -392,14 +365,14 @@ class RegistrationContext {
 
 		foreach ($this->parameters as $registration) {
 			try {
-				$apps[$registration->getAppId()]
+				$apps[$registration['appId']]
 					->getContainer()
 					->registerParameter(
-						$registration->getName(),
-						$registration->getValue()
+						$registration['name'],
+						$registration['value']
 					);
 			} catch (Throwable $e) {
-				$appId = $registration->getAppId();
+				$appId = $registration['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during service alias registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -412,13 +385,13 @@ class RegistrationContext {
 	 * @param App[] $apps
 	 */
 	public function delegateMiddlewareRegistrations(array $apps): void {
-		while (($middleware = array_shift($this->middlewares)) !== null) {
+		foreach ($this->middlewares as $middleware) {
 			try {
-				$apps[$middleware->getAppId()]
+				$apps[$middleware['appId']]
 					->getContainer()
-					->registerMiddleWare($middleware->getService());
+					->registerMiddleWare($middleware['class']);
 			} catch (Throwable $e) {
-				$appId = $middleware->getAppId();
+				$appId = $middleware['appId'];
 				$this->logger->logException($e, [
 					'message' => "Error during capability registration of $appId: " . $e->getMessage(),
 					'level' => ILogger::ERROR,
@@ -428,37 +401,16 @@ class RegistrationContext {
 	}
 
 	/**
-	 * @return ServiceRegistration<IProvider>[]
+	 * @return array[]
 	 */
 	public function getSearchProviders(): array {
 		return $this->searchProviders;
 	}
 
 	/**
-	 * @return ServiceRegistration<IAlternativeLogin>[]
+	 * @return array[]
 	 */
 	public function getAlternativeLogins(): array {
 		return $this->alternativeLogins;
-	}
-
-	/**
-	 * @return array[]
-	 */
-	public function getInitialStates(): array {
-		return $this->initialStates;
-	}
-
-	/**
-	 * @return ServiceRegistration<IHandler>[]
-	 */
-	public function getWellKnownHandlers(): array {
-		return $this->wellKnownHandlers;
-	}
-
-	/**
-	 * @return ServiceRegistration<ICustomTemplateProvider>[]
-	 */
-	public function getTemplateProviders(): array {
-		return $this->templateProviders;
 	}
 }

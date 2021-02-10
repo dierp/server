@@ -13,7 +13,6 @@
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license AGPL-3.0
  *
@@ -33,10 +32,10 @@
 
 namespace OC;
 
-use OC\DB\Connection;
 use OC\DB\OracleConnection;
 use OCP\IAppConfig;
 use OCP\IConfig;
+use OCP\IDBConnection;
 
 /**
  * This class provides an easy way for apps to store config values in the
@@ -68,7 +67,7 @@ class AppConfig implements IAppConfig {
 		],
 	];
 
-	/** @var Connection */
+	/** @var \OCP\IDBConnection */
 	protected $conn;
 
 	/** @var array[] */
@@ -78,10 +77,11 @@ class AppConfig implements IAppConfig {
 	private $configLoaded = false;
 
 	/**
-	 * @param Connection $conn
+	 * @param IDBConnection $conn
 	 */
-	public function __construct(Connection $conn) {
+	public function __construct(IDBConnection $conn) {
 		$this->conn = $conn;
+		$this->configLoaded = false;
 	}
 
 	/**
@@ -348,10 +348,10 @@ class AppConfig implements IAppConfig {
 		$rows = $result->fetchAll();
 		foreach ($rows as $row) {
 			if (!isset($this->cache[$row['appid']])) {
-				$this->cache[(string)$row['appid']] = [];
+				$this->cache[$row['appid']] = [];
 			}
 
-			$this->cache[(string)$row['appid']][(string)$row['configkey']] = (string)$row['configvalue'];
+			$this->cache[$row['appid']][$row['configkey']] = $row['configvalue'];
 		}
 		$result->closeCursor();
 

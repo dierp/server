@@ -3,7 +3,6 @@
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
  * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license AGPL-3.0
  *
@@ -24,10 +23,12 @@
 namespace OC\Command;
 
 use OC\BackgroundJob\QueuedJob;
+use SuperClosure\Serializer;
 
 class ClosureJob extends QueuedJob {
 	protected function run($serializedCallable) {
-		$callable = \Opis\Closure\unserialize($serializedCallable);
+		$serializer = new Serializer();
+		$callable = $serializer->unserialize($serializedCallable);
 		if (is_callable($callable)) {
 			$callable();
 		} else {

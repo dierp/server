@@ -6,11 +6,8 @@
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author timm2k <timm2k@gmx.de>
- * @author Vincent Petry <vincent@nextcloud.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -33,9 +30,9 @@ namespace OC\Core\Command\Db;
 
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Types\Type;
-use OCP\DB\Types;
-use OC\DB\Connection;
+use Doctrine\DBAL\Types\Types;
 use OC\DB\SchemaWrapper;
+use OCP\IDBConnection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -43,13 +40,13 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class ConvertFilecacheBigInt extends Command {
 
-	/** @var Connection */
+	/** @var IDBConnection */
 	private $connection;
 
 	/**
-	 * @param Connection $connection
+	 * @param IDBConnection $connection
 	 */
-	public function __construct(Connection $connection) {
+	public function __construct(IDBConnection $connection) {
 		$this->connection = $connection;
 		parent::__construct();
 	}

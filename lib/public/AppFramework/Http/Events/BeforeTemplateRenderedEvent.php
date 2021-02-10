@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2020, Roeland Jago Douma <roeland@famdouma.nl>
  *
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -61,7 +60,7 @@ class BeforeTemplateRenderedEvent extends Event {
 	}
 
 	/**
-	 * @since 20.0.0
+	 * @since 20.0.1
 	 */
 	public function getResponse(): TemplateResponse {
 		return $this->response;

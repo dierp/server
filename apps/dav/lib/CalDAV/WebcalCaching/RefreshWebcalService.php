@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 /**
  * @copyright Copyright (c) 2020, Thomas Citharel <nextcloud@tcit.fr>
- * @copyright Copyright (c) 2020, leith abdulla (<online-nextcloud@eleith.com>)
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author eleith <online+github@eleith.com>
  * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Thomas Citharel <nextcloud@tcit.fr>
@@ -47,7 +45,6 @@ use Sabre\DAV\Xml\Property\Href;
 use Sabre\VObject\Component;
 use Sabre\VObject\DateTimeParser;
 use Sabre\VObject\InvalidDataException;
-use Sabre\VObject\Recur\NoInstancesException;
 use Sabre\VObject\ParseException;
 use Sabre\VObject\Reader;
 use Sabre\VObject\Splitter\ICalendar;
@@ -143,7 +140,7 @@ class RefreshWebcalService {
 				$calendarData = $vObject->serialize();
 				try {
 					$this->calDavBackend->createCalendarObject($subscription['id'], $uri, $calendarData, CalDavBackend::CALENDAR_TYPE_SUBSCRIPTION);
-				} catch (NoInstancesException | BadRequest $ex) {
+				} catch (BadRequest $ex) {
 					$this->logger->logException($ex);
 				}
 			}

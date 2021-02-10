@@ -2,13 +2,10 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Tigran Mkrtchyan <tigran.mkrtchyan@desy.de>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -61,7 +58,7 @@ class Encoding extends Wrapper {
 	 * @return bool true if the string is all ASCII, false otherwise
 	 */
 	private function isAscii($str) {
-		return !preg_match('/[\\x80-\\xff]+/', $str);
+		return (bool) !preg_match('/[\\x80-\\xff]+/', $str);
 	}
 
 	/**
@@ -127,7 +124,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.mkdir.php
+	 * see http://php.net/manual/en/function.mkdir.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -142,7 +139,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.rmdir.php
+	 * see http://php.net/manual/en/function.rmdir.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -156,17 +153,17 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.opendir.php
+	 * see http://php.net/manual/en/function.opendir.php
 	 *
 	 * @param string $path
-	 * @return resource|bool
+	 * @return resource
 	 */
 	public function opendir($path) {
 		return $this->storage->opendir($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.is_dir.php
+	 * see http://php.net/manual/en/function.is_dir.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -176,7 +173,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.is_file.php
+	 * see http://php.net/manual/en/function.is_file.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -186,32 +183,32 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.stat.php
+	 * see http://php.net/manual/en/function.stat.php
 	 * only the following keys are required in the result: size and mtime
 	 *
 	 * @param string $path
-	 * @return array|bool
+	 * @return array
 	 */
 	public function stat($path) {
 		return $this->storage->stat($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.filetype.php
+	 * see http://php.net/manual/en/function.filetype.php
 	 *
 	 * @param string $path
-	 * @return string|bool
+	 * @return bool
 	 */
 	public function filetype($path) {
 		return $this->storage->filetype($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.filesize.php
+	 * see http://php.net/manual/en/function.filesize.php
 	 * The result for filesize when called on a folder is required to be 0
 	 *
 	 * @param string $path
-	 * @return int|bool
+	 * @return int
 	 */
 	public function filesize($path) {
 		return $this->storage->filesize($this->findPathToUse($path));
@@ -279,7 +276,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.file_exists.php
+	 * see http://php.net/manual/en/function.file_exists.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -289,38 +286,38 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.filemtime.php
+	 * see http://php.net/manual/en/function.filemtime.php
 	 *
 	 * @param string $path
-	 * @return int|bool
+	 * @return int
 	 */
 	public function filemtime($path) {
 		return $this->storage->filemtime($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.file_get_contents.php
+	 * see http://php.net/manual/en/function.file_get_contents.php
 	 *
 	 * @param string $path
-	 * @return string|bool
+	 * @return string
 	 */
 	public function file_get_contents($path) {
 		return $this->storage->file_get_contents($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.file_put_contents.php
+	 * see http://php.net/manual/en/function.file_put_contents.php
 	 *
 	 * @param string $path
-	 * @param mixed $data
-	 * @return int|false
+	 * @param string $data
+	 * @return bool
 	 */
 	public function file_put_contents($path, $data) {
 		return $this->storage->file_put_contents($this->findPathToUse($path), $data);
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.unlink.php
+	 * see http://php.net/manual/en/function.unlink.php
 	 *
 	 * @param string $path
 	 * @return bool
@@ -334,7 +331,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.rename.php
+	 * see http://php.net/manual/en/function.rename.php
 	 *
 	 * @param string $path1
 	 * @param string $path2
@@ -346,7 +343,7 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.copy.php
+	 * see http://php.net/manual/en/function.copy.php
 	 *
 	 * @param string $path1
 	 * @param string $path2
@@ -357,11 +354,11 @@ class Encoding extends Wrapper {
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.fopen.php
+	 * see http://php.net/manual/en/function.fopen.php
 	 *
 	 * @param string $path
 	 * @param string $mode
-	 * @return resource|bool
+	 * @return resource
 	 */
 	public function fopen($path, $mode) {
 		$result = $this->storage->fopen($this->findPathToUse($path), $mode);
@@ -376,29 +373,29 @@ class Encoding extends Wrapper {
 	 * The mimetype for a folder is required to be "httpd/unix-directory"
 	 *
 	 * @param string $path
-	 * @return string|bool
+	 * @return string
 	 */
 	public function getMimeType($path) {
 		return $this->storage->getMimeType($this->findPathToUse($path));
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.hash.php
+	 * see http://php.net/manual/en/function.hash.php
 	 *
 	 * @param string $type
 	 * @param string $path
 	 * @param bool $raw
-	 * @return string|bool
+	 * @return string
 	 */
 	public function hash($type, $path, $raw = false) {
 		return $this->storage->hash($type, $this->findPathToUse($path), $raw);
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.free_space.php
+	 * see http://php.net/manual/en/function.free_space.php
 	 *
 	 * @param string $path
-	 * @return int|bool
+	 * @return int
 	 */
 	public function free_space($path) {
 		return $this->storage->free_space($this->findPathToUse($path));
@@ -408,14 +405,14 @@ class Encoding extends Wrapper {
 	 * search for occurrences of $query in file names
 	 *
 	 * @param string $query
-	 * @return array|bool
+	 * @return array
 	 */
 	public function search($query) {
 		return $this->storage->search($query);
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.touch.php
+	 * see http://php.net/manual/en/function.touch.php
 	 * If the backend does not support the operation, false should be returned
 	 *
 	 * @param string $path
@@ -431,7 +428,7 @@ class Encoding extends Wrapper {
 	 * The local version of the file can be temporary and doesn't have to be persistent across requests
 	 *
 	 * @param string $path
-	 * @return string|bool
+	 * @return string
 	 */
 	public function getLocalFile($path) {
 		return $this->storage->getLocalFile($this->findPathToUse($path));
@@ -483,7 +480,7 @@ class Encoding extends Wrapper {
 	 * get the ETag for a file or folder
 	 *
 	 * @param string $path
-	 * @return string|bool
+	 * @return string
 	 */
 	public function getETag($path) {
 		return $this->storage->getETag($this->findPathToUse($path));

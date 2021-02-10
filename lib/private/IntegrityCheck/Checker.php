@@ -11,7 +11,7 @@ declare(strict_types=1);
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Victor Dubiniuk <dubiniuk@owncloud.com>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  * @author Xheni Myrtaj <myrtajxheni@gmail.com>
  *
  * @license AGPL-3.0
@@ -44,6 +44,7 @@ use OCP\Files\IMimeTypeDetector;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IConfig;
+use OCP\ITempManager;
 use phpseclib\Crypt\RSA;
 use phpseclib\File\X509;
 
@@ -65,12 +66,14 @@ class Checker {
 	private $appLocator;
 	/** @var FileAccessHelper */
 	private $fileAccessHelper;
-	/** @var IConfig|null */
+	/** @var IConfig */
 	private $config;
 	/** @var ICache */
 	private $cache;
-	/** @var IAppManager|null */
+	/** @var IAppManager */
 	private $appManager;
+	/** @var ITempManager */
+	private $tempManager;
 	/** @var IMimeTypeDetector */
 	private $mimeTypeDetector;
 
@@ -78,17 +81,19 @@ class Checker {
 	 * @param EnvironmentHelper $environmentHelper
 	 * @param FileAccessHelper $fileAccessHelper
 	 * @param AppLocator $appLocator
-	 * @param IConfig|null $config
+	 * @param IConfig $config
 	 * @param ICacheFactory $cacheFactory
-	 * @param IAppManager|null $appManager
+	 * @param IAppManager $appManager
+	 * @param ITempManager $tempManager
 	 * @param IMimeTypeDetector $mimeTypeDetector
 	 */
 	public function __construct(EnvironmentHelper $environmentHelper,
 								FileAccessHelper $fileAccessHelper,
 								AppLocator $appLocator,
-								?IConfig $config,
+								IConfig $config = null,
 								ICacheFactory $cacheFactory,
-								?IAppManager $appManager,
+								IAppManager $appManager = null,
+								ITempManager $tempManager,
 								IMimeTypeDetector $mimeTypeDetector) {
 		$this->environmentHelper = $environmentHelper;
 		$this->fileAccessHelper = $fileAccessHelper;
@@ -96,6 +101,7 @@ class Checker {
 		$this->config = $config;
 		$this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
 		$this->appManager = $appManager;
+		$this->tempManager = $tempManager;
 		$this->mimeTypeDetector = $mimeTypeDetector;
 	}
 
@@ -300,30 +306,17 @@ class Checker {
 	}
 
 	/**
-	 * Split the certificate file in individual certs
-	 *
-	 * @param string $cert
-	 * @return string[]
-	 */
-	private function splitCerts(string $cert): array {
-		preg_match_all('([\-]{3,}[\S\ ]+?[\-]{3,}[\S\s]+?[\-]{3,}[\S\ ]+?[\-]{3,})', $cert, $matches);
-
-		return $matches[0];
-	}
-
-	/**
 	 * Verifies the signature for the specified path.
 	 *
 	 * @param string $signaturePath
 	 * @param string $basePath
 	 * @param string $certificateCN
-	 * @param bool $forceVerify
 	 * @return array
 	 * @throws InvalidSignatureException
 	 * @throws \Exception
 	 */
-	private function verify(string $signaturePath, string $basePath, string $certificateCN, bool $forceVerify = false): array {
-		if (!$forceVerify && !$this->isCodeCheckEnforced()) {
+	private function verify(string $signaturePath, string $basePath, string $certificateCN): array {
+		if (!$this->isCodeCheckEnforced()) {
 			return [];
 		}
 
@@ -345,11 +338,7 @@ class Checker {
 		// Check if certificate is signed by Nextcloud Root Authority
 		$x509 = new \phpseclib\File\X509();
 		$rootCertificatePublicKey = $this->fileAccessHelper->file_get_contents($this->environmentHelper->getServerRoot().'/resources/codesigning/root.crt');
-
-		$rootCerts = $this->splitCerts($rootCertificatePublicKey);
-		foreach ($rootCerts as $rootCert) {
-			$x509->loadCA($rootCert);
-		}
+		$x509->loadCA($rootCertificatePublicKey);
 		$x509->loadX509($certificate);
 		if (!$x509->validateSignature()) {
 			throw new InvalidSignatureException('Certificate is not valid.');
@@ -506,10 +495,9 @@ class Checker {
 	 *
 	 * @param string $appId
 	 * @param string $path Optional path. If none is given it will be guessed.
-	 * @param bool $forceVerify
 	 * @return array
 	 */
-	public function verifyAppSignature(string $appId, string $path = '', bool $forceVerify = false): array {
+	public function verifyAppSignature(string $appId, string $path = ''): array {
 		try {
 			if ($path === '') {
 				$path = $this->appLocator->getAppPath($appId);
@@ -517,8 +505,7 @@ class Checker {
 			$result = $this->verify(
 					$path . '/appinfo/signature.json',
 					$path,
-					$appId,
-					$forceVerify
+					$appId
 			);
 		} catch (\Exception $e) {
 			$result = [

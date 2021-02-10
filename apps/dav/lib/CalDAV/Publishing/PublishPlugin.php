@@ -138,7 +138,7 @@ class PublishPlugin extends ServerPlugin {
 					$canPublish &= ($node->getOwner() === $node->getPrincipalURI());
 				}
 
-				return new AllowedSharingModes($canShare, $canPublish);
+				return new AllowedSharingModes((bool)$canShare, (bool)$canPublish);
 			});
 		}
 	}

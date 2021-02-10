@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -111,16 +110,13 @@ class FilesSearchProvider implements IProvider {
 					? $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreviewByFileId', ['x' => 32, 'y' => 32, 'fileId' => $result->id])
 					: '';
 
-				$searchResultEntry = new SearchResultEntry(
+				return new SearchResultEntry(
 					$thumbnailUrl,
 					$result->name,
 					$this->formatSubline($result),
 					$this->urlGenerator->getAbsoluteURL($result->link),
 					$result->type === 'folder' ? 'icon-folder' : $this->mimeTypeDetector->mimeTypeIcon($result->mime_type)
 				);
-				$searchResultEntry->addAttribute('fileId', (string)$result->id);
-				$searchResultEntry->addAttribute('path', $result->path);
-				return $searchResultEntry;
 			}, $this->fileSearch->search($query->getTerm()))
 		);
 	}

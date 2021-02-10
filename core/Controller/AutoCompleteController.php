@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -42,18 +41,18 @@ use OCP\Share\IShare;
 class AutoCompleteController extends Controller {
 	/** @var ISearch */
 	private $collaboratorSearch;
-
 	/** @var IManager */
 	private $autoCompleteManager;
-
 	/** @var IEventDispatcher */
 	private $dispatcher;
 
-	public function __construct(string $appName,
-								IRequest $request,
-								ISearch $collaboratorSearch,
-								IManager $autoCompleteManager,
-								IEventDispatcher $dispatcher) {
+	public function __construct(
+		string $appName,
+		IRequest $request,
+		ISearch $collaboratorSearch,
+		IManager $autoCompleteManager,
+		IEventDispatcher $dispatcher
+	) {
 		parent::__construct($appName, $request);
 
 		$this->collaboratorSearch = $collaboratorSearch;
@@ -115,10 +114,7 @@ class AutoCompleteController extends Controller {
 				$output[] = [
 					'id' => (string) $result['value']['shareWith'],
 					'label' => $result['label'],
-					'icon' => $result['icon'],
 					'source' => $type,
-					'status' => $result['status'],
-					'subline' => $result['subline']
 				];
 			}
 		}

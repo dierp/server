@@ -73,13 +73,13 @@ class SimpleContainer implements ArrayAccess, ContainerInterface, IContainer {
 		}
 
 		return $class->newInstanceArgs(array_map(function (ReflectionParameter $parameter) {
-			$parameterType = $parameter->getType();
-
-			$resolveName = $parameter->getName();
+			$parameterClass = $parameter->getClass();
 
 			// try to find out if it is a class or a simple parameter
-			if ($parameterType !== null && !$parameterType->isBuiltin()) {
-				$resolveName = $parameterType->getName();
+			if ($parameterClass === null) {
+				$resolveName = $parameter->getName();
+			} else {
+				$resolveName = $parameterClass->name;
 			}
 
 			try {
@@ -91,14 +91,9 @@ class SimpleContainer implements ArrayAccess, ContainerInterface, IContainer {
 					return $parameter->getDefaultValue();
 				}
 
-				if ($parameterType !== null && !$parameterType->isBuiltin()) {
+				if ($parameterClass !== null) {
 					$resolveName = $parameter->getName();
-					try {
-						return $this->query($resolveName);
-					} catch (QueryException $e2) {
-						// don't lose the error we got while trying to query by type
-						throw new QueryException($e2->getMessage(), (int) $e2->getCode(), $e);
-					}
+					return $this->query($resolveName);
 				}
 
 				throw $e;

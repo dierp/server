@@ -21,7 +21,6 @@ class ComposerStaticInitDAV
     );
 
     public static $classMap = array (
-        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'OCA\\DAV\\AppInfo\\Application' => __DIR__ . '/..' . '/../lib/AppInfo/Application.php',
         'OCA\\DAV\\AppInfo\\PluginManager' => __DIR__ . '/..' . '/../lib/AppInfo/PluginManager.php',
         'OCA\\DAV\\Avatars\\AvatarHome' => __DIR__ . '/..' . '/../lib/Avatars/AvatarHome.php',
@@ -219,11 +218,8 @@ class ComposerStaticInitDAV
         'OCA\\DAV\\Files\\Sharing\\FilesDropPlugin' => __DIR__ . '/..' . '/../lib/Files/Sharing/FilesDropPlugin.php',
         'OCA\\DAV\\Files\\Sharing\\PublicLinkCheckPlugin' => __DIR__ . '/..' . '/../lib/Files/Sharing/PublicLinkCheckPlugin.php',
         'OCA\\DAV\\HookManager' => __DIR__ . '/..' . '/../lib/HookManager.php',
-        'OCA\\DAV\\Listener\\CalendarContactInteractionListener' => __DIR__ . '/..' . '/../lib/Listener/CalendarContactInteractionListener.php',
         'OCA\\DAV\\Migration\\BuildCalendarSearchIndex' => __DIR__ . '/..' . '/../lib/Migration/BuildCalendarSearchIndex.php',
         'OCA\\DAV\\Migration\\BuildCalendarSearchIndexBackgroundJob' => __DIR__ . '/..' . '/../lib/Migration/BuildCalendarSearchIndexBackgroundJob.php',
-        'OCA\\DAV\\Migration\\BuildSocialSearchIndex' => __DIR__ . '/..' . '/../lib/Migration/BuildSocialSearchIndex.php',
-        'OCA\\DAV\\Migration\\BuildSocialSearchIndexBackgroundJob' => __DIR__ . '/..' . '/../lib/Migration/BuildSocialSearchIndexBackgroundJob.php',
         'OCA\\DAV\\Migration\\CalDAVRemoveEmptyValue' => __DIR__ . '/..' . '/../lib/Migration/CalDAVRemoveEmptyValue.php',
         'OCA\\DAV\\Migration\\ChunkCleanup' => __DIR__ . '/..' . '/../lib/Migration/ChunkCleanup.php',
         'OCA\\DAV\\Migration\\FixBirthdayCalendarComponent' => __DIR__ . '/..' . '/../lib/Migration/FixBirthdayCalendarComponent.php',

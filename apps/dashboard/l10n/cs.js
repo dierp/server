@@ -2,7 +2,7 @@ OC.L10N.register(
     "dashboard",
     {
     "Dashboard" : "Nástěnka",
-    "Dashboard app" : "Aplikace Nástěnka",
+    "Dashboard app" : "Aplikace Přehled",
     "Show something" : "Zobrazit něco",
     "Customize" : "Přizpůsobit",
     "Edit widgets" : "Upravit ovládací prvky",

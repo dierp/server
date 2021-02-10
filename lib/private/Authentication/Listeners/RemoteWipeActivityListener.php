@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright 2019 Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -34,7 +33,7 @@ use OC\Authentication\Token\IToken;
 use OCP\Activity\IManager as IActvityManager;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Log\LoggerInterface;
+use OCP\ILogger;
 
 /**
  * @template-implements IEventListener<\OC\Authentication\Events\ARemoteWipeEvent>
@@ -44,11 +43,11 @@ class RemoteWipeActivityListener implements IEventListener {
 	/** @var IActvityManager */
 	private $activityManager;
 
-	/** @var LoggerInterface */
+	/** @var ILogger */
 	private $logger;
 
 	public function __construct(IActvityManager $activityManager,
-								LoggerInterface $logger) {
+								ILogger $logger) {
 		$this->activityManager = $activityManager;
 		$this->logger = $logger;
 	}
@@ -73,9 +72,10 @@ class RemoteWipeActivityListener implements IEventListener {
 		try {
 			$this->activityManager->publish($activity);
 		} catch (BadMethodCallException $e) {
-			$this->logger->warning('could not publish activity', [
+			$this->logger->logException($e, [
 				'app' => 'core',
-				'exception' => $e,
+				'level' => ILogger::WARN,
+				'message' => 'could not publish activity',
 			]);
 		}
 	}

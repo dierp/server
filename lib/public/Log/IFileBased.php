@@ -3,7 +3,6 @@
  * @copyright Copyright (c) 2018 Arthur Schiwon <blizzz@arthur-schiwon.de>
  *
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -39,5 +38,5 @@ interface IFileBased {
 	/**
 	 * @since 14.0.0
 	 */
-	public function getEntries(int $limit = 50, int $offset = 0): array;
+	public function getEntries(int $limit=50, int $offset=0): array;
 }

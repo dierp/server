@@ -7,7 +7,6 @@
  * @author Florent <florent@coppint.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author S. Cat <33800996+sparrowjack63@users.noreply.github.com>
  * @author Stephen Cuppett <steve@cuppett.com>
  *
@@ -32,7 +31,6 @@ namespace OC\Files\ObjectStore;
 
 use Aws\ClientResolver;
 use Aws\Credentials\CredentialProvider;
-use Aws\Credentials\EcsCredentialProvider;
 use Aws\Credentials\Credentials;
 use Aws\Exception\CredentialsException;
 use Aws\S3\Exception\S3Exception;
@@ -78,7 +76,6 @@ trait S3ConnectionTrait {
 		if (!isset($params['port']) || $params['port'] === '') {
 			$params['port'] = (isset($params['use_ssl']) && $params['use_ssl'] === false) ? 80 : 443;
 		}
-		$params['verify_bucket_exists'] = empty($params['verify_bucket_exists']) ? true : $params['verify_bucket_exists'];
 		$this->params = $params;
 	}
 
@@ -106,10 +103,7 @@ trait S3ConnectionTrait {
 			CredentialProvider::chain(
 				$this->paramCredentialProvider(),
 				CredentialProvider::env(),
-				CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(),
-				!empty(getenv(EcsCredentialProvider::ENV_URI))
-					? CredentialProvider::ecsCredentials()
-					: CredentialProvider::instanceProfile()
+				CredentialProvider::instanceProfile()
 			)
 		);
 
@@ -136,7 +130,7 @@ trait S3ConnectionTrait {
 					 ['app' => 'objectstore']);
 		}
 
-		if ($this->params['verify_bucket_exists'] && !$this->connection->doesBucketExist($this->bucket)) {
+		if (!$this->connection->doesBucketExist($this->bucket)) {
 			$logger = \OC::$server->getLogger();
 			try {
 				$logger->info('Bucket "' . $this->bucket . '" does not exist - creating it.', ['app' => 'objectstore']);

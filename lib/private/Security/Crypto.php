@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @author Andreas Fischer <bantu@owncloud.com>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Lukas Reschke <lukas@statuscode.ch>
- * @author lynn-stephenson <lynn.stephenson@protonmail.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -91,17 +90,16 @@ class Crypto implements ICrypto {
 		if ($password === '') {
 			$password = $this->config->getSystemValue('secret');
 		}
-		$keyMaterial = hash_hkdf('sha512', $password);
-		$this->cipher->setPassword(substr($keyMaterial, 0, 32));
+		$this->cipher->setPassword($password);
 
 		$iv = \random_bytes($this->ivLength);
 		$this->cipher->setIV($iv);
 
 		$ciphertext = bin2hex($this->cipher->encrypt($plaintext));
 		$iv = bin2hex($iv);
-		$hmac = bin2hex($this->calculateHMAC($ciphertext.$iv, substr($keyMaterial, 32)));
+		$hmac = bin2hex($this->calculateHMAC($ciphertext.$iv, $password));
 
-		return $ciphertext.'|'.$iv.'|'.$hmac.'|3';
+		return $ciphertext.'|'.$iv.'|'.$hmac.'|2';
 	}
 
 	/**
@@ -116,7 +114,7 @@ class Crypto implements ICrypto {
 		if ($password === '') {
 			$password = $this->config->getSystemValue('secret');
 		}
-		$hmacKey = $encryptionKey = $password;
+		$this->cipher->setPassword($password);
 
 		$parts = explode('|', $authenticatedCiphertext);
 		$partCount = \count($parts);
@@ -130,20 +128,14 @@ class Crypto implements ICrypto {
 
 		if ($partCount === 4) {
 			$version = $parts[3];
-			if ($version >= '2') {
+			if ($version === '2') {
 				$iv = hex2bin($iv);
 			}
-
-			if ($version === '3') {
-				$keyMaterial = hash_hkdf('sha512', $password);
-				$encryptionKey = substr($keyMaterial, 0, 32);
-				$hmacKey = substr($keyMaterial, 32);
-			}
 		}
-		$this->cipher->setPassword($encryptionKey);
+
 		$this->cipher->setIV($iv);
 
-		if (!hash_equals($this->calculateHMAC($parts[0] . $parts[1], $hmacKey), $hmac)) {
+		if (!hash_equals($this->calculateHMAC($parts[0] . $parts[1], $password), $hmac)) {
 			throw new \Exception('HMAC does not match.');
 		}
 

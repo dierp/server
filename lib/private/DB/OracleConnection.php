@@ -8,7 +8,6 @@
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license AGPL-3.0
  *
@@ -48,35 +47,35 @@ class OracleConnection extends Connection {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function insert($table, array $data, array $types = []) {
-		if ($table[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
-			$table = $this->quoteIdentifier($table);
+	public function insert($tableExpression, array $data, array $types = []) {
+		if ($tableExpression[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
+			$tableExpression = $this->quoteIdentifier($tableExpression);
 		}
 		$data = $this->quoteKeys($data);
-		return parent::insert($table, $data, $types);
+		return parent::insert($tableExpression, $data, $types);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function update($table, array $data, array $criteria, array $types = []) {
-		if ($table[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
-			$table = $this->quoteIdentifier($table);
+	public function update($tableExpression, array $data, array $identifier, array $types = []) {
+		if ($tableExpression[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
+			$tableExpression = $this->quoteIdentifier($tableExpression);
 		}
 		$data = $this->quoteKeys($data);
-		$criteria = $this->quoteKeys($criteria);
-		return parent::update($table, $data, $criteria, $types);
+		$identifier = $this->quoteKeys($identifier);
+		return parent::update($tableExpression, $data, $identifier, $types);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function delete($table, array $criteria, array $types = []) {
-		if ($table[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
-			$table = $this->quoteIdentifier($table);
+	public function delete($tableExpression, array $identifier, array $types = []) {
+		if ($tableExpression[0] !== $this->getDatabasePlatform()->getIdentifierQuoteCharacter()) {
+			$tableExpression = $this->quoteIdentifier($tableExpression);
 		}
-		$criteria = $this->quoteKeys($criteria);
-		return parent::delete($table, $criteria);
+		$identifier = $this->quoteKeys($identifier);
+		return parent::delete($tableExpression, $identifier);
 	}
 
 	/**

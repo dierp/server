@@ -7,13 +7,14 @@
  * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Calviño Sánchez <danxuliu@gmail.com>
+ * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Jan-Christoph Borchardt <hey@jancborchardt.net>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Julius Haertl <jus@bitgrid.net>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Kyle Fazzari <kyrofa@ubuntu.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
- * @author nhirokinet <nhirokinet@nhiroki.net>
+ * @author Michael Weimann <mail@michael-weimann.eu>
  * @author rakekniven <mark.ziegler@rakekniven.de>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -381,8 +382,8 @@ class ThemingController extends Controller {
 					[
 						'src' => $this->urlGenerator->linkToRoute('theming.Icon.getTouchIcon',
 								['app' => $app]) . '?v=' . $cacheBusterValue,
-						'type' => 'image/png',
-						'sizes' => '512x512'
+						'type'=> 'image/png',
+						'sizes'=> '128x128'
 					],
 					[
 						'src' => $this->urlGenerator->linkToRoute('theming.Icon.getFavicon',

@@ -30,7 +30,7 @@ class GroupwareBundle extends Bundle {
 	 * {@inheritDoc}
 	 */
 	public function getName() {
-		return $this->l10n->t('Groupware bundle');
+		return (string)$this->l10n->t('Groupware bundle');
 	}
 
 	/**

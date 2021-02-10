@@ -8,20 +8,16 @@
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Derek <derek.kelly27@gmail.com>
  * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Ko- <k.stoffelen@cs.ru.nl>
  * @author Lauris Binde <laurisb@users.noreply.github.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Michael Weimann <mail@michael-weimann.eu>
  * @author Morris Jobke <hey@morrisjobke.de>
- * @author nhirokinet <nhirokinet@nhiroki.net>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Sven Strickroth <email@cs-ware.de>
  * @author Sylvia van Os <sylvia@hackerchick.me>
- * @author timm2k <timm2k@gmx.de>
  * @author Timo Förster <tfoerster@webfoersterei.de>
  *
  * @license AGPL-3.0
@@ -44,10 +40,9 @@ namespace OCA\Settings\Controller;
 
 use bantu\IniGetWrapper\IniGetWrapper;
 use DirectoryIterator;
-use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
-use Doctrine\DBAL\TransactionIsolationLevel;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use GuzzleHttp\Exception\ClientException;
 use OC;
 use OC\AppFramework\Http;
@@ -59,7 +54,6 @@ use OC\DB\SchemaWrapper;
 use OC\IntegrityCheck\Checker;
 use OC\Lock\NoopLockingProvider;
 use OC\MemoryInfo;
-use OCA\Settings\SetupChecks\CheckUserCertificates;
 use OCA\Settings\SetupChecks\LegacySSEKeyFormat;
 use OCA\Settings\SetupChecks\PhpDefaultCharset;
 use OCA\Settings\SetupChecks\PhpOutputBuffering;
@@ -96,7 +90,7 @@ class CheckSetupController extends Controller {
 	private $logger;
 	/** @var EventDispatcherInterface */
 	private $dispatcher;
-	/** @var Connection */
+	/** @var IDBConnection|Connection */
 	private $db;
 	/** @var ILockingProvider */
 	private $lockingProvider;
@@ -120,7 +114,7 @@ class CheckSetupController extends Controller {
 								Checker $checker,
 								ILogger $logger,
 								EventDispatcherInterface $dispatcher,
-								Connection $db,
+								IDBConnection $db,
 								ILockingProvider $lockingProvider,
 								IDateTimeFormatter $dateTimeFormatter,
 								MemoryInfo $memoryInfo,
@@ -244,9 +238,9 @@ class CheckSetupController extends Controller {
 			return '';
 		}
 
-		$features = $this->l10n->t('installing and updating apps via the app store or Federated Cloud Sharing');
+		$features = (string)$this->l10n->t('installing and updating apps via the app store or Federated Cloud Sharing');
 		if (!$this->config->getSystemValue('appstoreenabled', true)) {
-			$features = $this->l10n->t('Federated Cloud Sharing');
+			$features = (string)$this->l10n->t('Federated Cloud Sharing');
 		}
 
 		// Check if at least OpenSSL after 1.01d or 1.0.2b
@@ -292,7 +286,7 @@ class CheckSetupController extends Controller {
 
 	/**
 	 * Whether the php version is still supported (at time of release)
-	 * according to: https://www.php.net/supported-versions.php
+	 * according to: https://secure.php.net/supported-versions.php
 	 *
 	 * @return array
 	 */
@@ -498,8 +492,8 @@ Raw output
 				return true;
 			}
 
-			return $this->db->getTransactionIsolation() === TransactionIsolationLevel::READ_COMMITTED;
-		} catch (Exception $e) {
+			return $this->db->getTransactionIsolation() === Connection::TRANSACTION_READ_COMMITTED;
+		} catch (DBALException $e) {
 			// ignore
 		}
 
@@ -544,6 +538,10 @@ Raw output
 		}
 
 		return [];
+	}
+
+	protected function isPHPMailerUsed(): bool {
+		return $this->config->getSystemValue('mail_smtpmode', 'smtp') === 'php';
 	}
 
 	protected function hasOpcacheLoaded(): bool {
@@ -707,10 +705,6 @@ Raw output
 		return false;
 	}
 
-	protected function imageMagickLacksSVGSupport(): bool {
-		return extension_loaded('imagick') && count(\Imagick::queryFormats('SVG')) === 0;
-	}
-
 	/**
 	 * @return DataResponse
 	 */
@@ -718,9 +712,7 @@ Raw output
 		$phpDefaultCharset = new PhpDefaultCharset();
 		$phpOutputBuffering = new PhpOutputBuffering();
 		$legacySSEKeyFormat = new LegacySSEKeyFormat($this->l10n, $this->config, $this->urlGenerator);
-		$checkUserCertificates = new CheckUserCertificates($this->l10n, $this->config, $this->urlGenerator);
 		$supportedDatabases = new SupportedDatabase($this->l10n, $this->connection);
-
 		return new DataResponse(
 			[
 				'isGetenvServerWorking' => !empty(getenv('PATH')),
@@ -753,6 +745,8 @@ Raw output
 				'missingColumns' => $this->hasMissingColumns(),
 				'isSqliteUsed' => $this->isSqliteUsed(),
 				'databaseConversionDocumentation' => $this->urlGenerator->linkToDocs('admin-db-conversion'),
+				'isPHPMailerUsed' => $this->isPHPMailerUsed(),
+				'mailSettingsDocumentation' => $this->urlGenerator->getAbsoluteURL('index.php/settings/admin'),
 				'isMemoryLimitSufficient' => $this->memoryInfo->isMemoryLimitSufficient(),
 				'appDirsWithDifferentOwner' => $this->getAppDirsWithDifferentOwner(),
 				'recommendedPHPModules' => $this->hasRecommendedPHPModules(),
@@ -760,12 +754,9 @@ Raw output
 				'isMysqlUsedWithoutUTF8MB4' => $this->isMysqlUsedWithoutUTF8MB4(),
 				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed' => $this->isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed(),
 				'reverseProxyGeneratedURL' => $this->urlGenerator->getAbsoluteURL('index.php'),
-				'imageMagickLacksSVGSupport' => $this->imageMagickLacksSVGSupport(),
 				PhpDefaultCharset::class => ['pass' => $phpDefaultCharset->run(), 'description' => $phpDefaultCharset->description(), 'severity' => $phpDefaultCharset->severity()],
 				PhpOutputBuffering::class => ['pass' => $phpOutputBuffering->run(), 'description' => $phpOutputBuffering->description(), 'severity' => $phpOutputBuffering->severity()],
 				LegacySSEKeyFormat::class => ['pass' => $legacySSEKeyFormat->run(), 'description' => $legacySSEKeyFormat->description(), 'severity' => $legacySSEKeyFormat->severity(), 'linkToDocumentation' => $legacySSEKeyFormat->linkToDocumentation()],
-				CheckUserCertificates::class => ['pass' => $checkUserCertificates->run(), 'description' => $checkUserCertificates->description(), 'severity' => $checkUserCertificates->severity(), 'elements' => $checkUserCertificates->elements()],
-				'isDefaultPhoneRegionSet' => $this->config->getSystemValueString('default_phone_region', '') !== '',
 				SupportedDatabase::class => ['pass' => $supportedDatabases->run(), 'description' => $supportedDatabases->description(), 'severity' => $supportedDatabases->severity()],
 			]
 		);

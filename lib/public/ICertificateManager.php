@@ -25,12 +25,12 @@
 namespace OCP;
 
 /**
- * Manage trusted certificates
+ * Manage trusted certificates for users
  * @since 8.0.0
  */
 interface ICertificateManager {
 	/**
-	 * Returns all certificates trusted by the system
+	 * Returns all certificates trusted by the user
 	 *
 	 * @return \OCP\ICertificate[]
 	 * @since 8.0.0
@@ -53,18 +53,20 @@ interface ICertificateManager {
 	public function removeCertificate($name);
 
 	/**
-	 * Get the path to the certificate bundle
+	 * Get the path to the certificate bundle for this user
 	 *
+	 * @param string $uid (optional) user to get the certificate bundle for, use `null` to get the system bundle (since 9.0.0)
 	 * @return string
 	 * @since 8.0.0
 	 */
-	public function getCertificateBundle();
+	public function getCertificateBundle($uid = '');
 
 	/**
-	 * Get the full local path to the certificate bundle
+	 * Get the full local path to the certificate bundle for this user
 	 *
+	 * @param string $uid (optional) user to get the certificate bundle for, use `null` to get the system bundle
 	 * @return string
 	 * @since 9.0.0
 	 */
-	public function getAbsoluteBundlePath();
+	public function getAbsoluteBundlePath($uid = '');
 }

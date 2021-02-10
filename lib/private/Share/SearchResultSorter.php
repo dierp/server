@@ -4,7 +4,6 @@
  *
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -52,7 +51,7 @@ class SearchResultSorter {
 	/**
 	 * User and Group names matching the search term at the beginning shall appear
 	 * on top of the share dialog. Following entries in alphabetical order.
-	 * Callback function for usort. https://www.php.net/usort
+	 * Callback function for usort. http://php.net/usort
 	 */
 	public function sort($a, $b) {
 		if (!isset($a[$this->key]) || !isset($b[$this->key])) {

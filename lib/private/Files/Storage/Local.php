@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author aler9 <46489434+aler9@users.noreply.github.com>
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Boris Rybalkin <ribalkin@gmail.com>
@@ -22,7 +21,7 @@
  * @author Stefan Weil <sw@weilnetz.de>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Tigran Mkrtchyan <tigran.mkrtchyan@desy.de>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -58,6 +57,8 @@ class Local extends \OC\Files\Storage\Common {
 
 	protected $dataDirLength;
 
+	protected $allowSymlinks = false;
+
 	protected $realDataDir;
 
 	public function __construct($arguments) {
@@ -86,10 +87,7 @@ class Local extends \OC\Files\Storage\Common {
 	}
 
 	public function mkdir($path) {
-		$sourcePath = $this->getSourcePath($path);
-		$result = @mkdir($sourcePath, 0777, true);
-		chmod($sourcePath, 0755);
-		return $result;
+		return @mkdir($this->getSourcePath($path), 0777, true);
 	}
 
 	public function rmdir($path) {
@@ -442,8 +440,7 @@ class Local extends \OC\Files\Storage\Common {
 
 		$fullPath = $this->datadir . $path;
 		$currentPath = $path;
-		$allowSymlinks = \OC::$server->getConfig()->getSystemValue('localstorage.allowsymlinks', false);
-		if ($allowSymlinks || $currentPath === '') {
+		if ($this->allowSymlinks || $currentPath === '') {
 			return $fullPath;
 		}
 		$pathToResolve = $fullPath;
@@ -559,7 +556,7 @@ class Local extends \OC\Files\Storage\Common {
 	}
 
 	public function writeStream(string $path, $stream, int $size = null): int {
-		$result = $this->file_put_contents($path, $stream);
+		$result = file_put_contents($this->getSourcePath($path), $stream);
 		if ($result === false) {
 			throw new GenericFileException("Failed write steam to $path");
 		} else {

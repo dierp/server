@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2019 Daniel Kesselberg <mail@danielkesselberg.de>
  *
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -29,7 +28,7 @@ declare(strict_types=1);
 namespace OC\Core\Migrations;
 
 use Closure;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;

@@ -21,7 +21,6 @@ class ComposerStaticInitOAuth2
     );
 
     public static $classMap = array (
-        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'OCA\\OAuth2\\Controller\\LoginRedirectorController' => __DIR__ . '/..' . '/../lib/Controller/LoginRedirectorController.php',
         'OCA\\OAuth2\\Controller\\OauthApiController' => __DIR__ . '/..' . '/../lib/Controller/OauthApiController.php',
         'OCA\\OAuth2\\Controller\\SettingsController' => __DIR__ . '/..' . '/../lib/Controller/SettingsController.php',

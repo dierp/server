@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2019, Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -29,12 +28,8 @@ declare(strict_types=1);
 namespace OC;
 
 use Closure;
-use OC\AppFramework\Bootstrap\Coordinator;
-use OCP\AppFramework\QueryException;
-use OCP\AppFramework\Services\InitialStateProvider;
 use OCP\IInitialStateService;
 use OCP\ILogger;
-use OCP\IServerContainer;
 
 class InitialStateService implements IInitialStateService {
 
@@ -47,16 +42,8 @@ class InitialStateService implements IInitialStateService {
 	/** @var Closure[][] */
 	private $lazyStates = [];
 
-	/** @var Coordinator */
-	private $bootstrapCoordinator;
-
-	/** @var IServerContainer */
-	private $container;
-
-	public function __construct(ILogger $logger, Coordinator $bootstrapCoordinator, IServerContainer $container) {
+	public function __construct(ILogger $logger) {
 		$this->logger = $logger;
-		$this->bootstrapCoordinator = $bootstrapCoordinator;
-		$this->container = $container;
 	}
 
 	public function provideInitialState(string $appName, string $key, $data): void {
@@ -101,45 +88,8 @@ class InitialStateService implements IInitialStateService {
 		$this->lazyStates = [];
 	}
 
-	/**
-	 * Load the lazy states via the IBootstrap mechanism
-	 */
-	private function loadLazyStates(): void {
-		$context = $this->bootstrapCoordinator->getRegistrationContext();
-
-		if ($context === null) {
-			// To early, nothing to do yet
-			return;
-		}
-
-		$initialStates = $context->getInitialStates();
-		foreach ($initialStates as $initialState) {
-			try {
-				$provider = $this->container->query($initialState['class']);
-			} catch (QueryException $e) {
-				// Log an continue. We can be fault tolerant here.
-				$this->logger->logException($e, [
-					'message' => 'Could not load initial state provider dynamically: ' . $e->getMessage(),
-					'level' => ILogger::ERROR,
-					'app' => $initialState['appId'],
-				]);
-				continue;
-			}
-
-			if (!($provider instanceof InitialStateProvider)) {
-				// Log an continue. We can be fault tolerant here.
-				$this->logger->error('Initial state provider is not an InitialStateProvider instance: ' . $initialState['class'], [
-					'app' => $initialState['appId'],
-				]);
-			}
-
-			$this->provideInitialState($initialState['appId'], $provider->getKey(), $provider);
-		}
-	}
-
 	public function getInitialStates(): array {
 		$this->invokeLazyStateCallbacks();
-		$this->loadLazyStates();
 
 		$appStates = [];
 		foreach ($this->states as $app => $states) {

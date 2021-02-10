@@ -33,7 +33,6 @@
 
 namespace OCA\Files_Sharing\External;
 
-use Doctrine\DBAL\Driver\Exception;
 use OC\Files\Filesystem;
 use OCA\FederatedFileSharing\Events\FederatedShareAddedEvent;
 use OCA\Files_Sharing\Helper;
@@ -130,7 +129,7 @@ class Manager {
 	 * @param string $remoteId
 	 * @param int $parent
 	 * @return Mount|null
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws \Doctrine\DBAL\DBALException
 	 */
 	public function addShare($remote, $token, $password, $name, $owner, $shareType, $accepted = false, $user = null, $remoteId = '', $parent = -1) {
 		$user = $user ? $user : $this->uid;
@@ -146,17 +145,17 @@ class Manager {
 			$mountPoint = $tmpMountPointName;
 			$hash = md5($tmpMountPointName);
 			$data = [
-				'remote' => $remote,
-				'share_token' => $token,
-				'password' => $password,
-				'name' => $name,
-				'owner' => $owner,
-				'user' => $user,
-				'mountpoint' => $mountPoint,
-				'mountpoint_hash' => $hash,
-				'accepted' => $accepted,
-				'remote_id' => $remoteId,
-				'share_type' => $shareType,
+				'remote'		=> $remote,
+				'share_token'	=> $token,
+				'password'		=> $password,
+				'name'			=> $name,
+				'owner'			=> $owner,
+				'user'			=> $user,
+				'mountpoint'	=> $mountPoint,
+				'mountpoint_hash'	=> $hash,
+				'accepted'		=> $accepted,
+				'remote_id'		=> $remoteId,
+				'share_type'    => $shareType,
 			];
 
 			$i = 1;
@@ -176,11 +175,11 @@ class Manager {
 		$this->writeShareToDb($remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, $shareType);
 
 		$options = [
-			'remote' => $remote,
-			'token' => $token,
-			'password' => $password,
-			'mountpoint' => $mountPoint,
-			'owner' => $owner
+			'remote'	=> $remote,
+			'token'		=> $token,
+			'password'	=> $password,
+			'mountpoint'	=> $mountPoint,
+			'owner'		=> $owner
 		];
 		return $this->mountShare($options);
 	}
@@ -200,17 +199,15 @@ class Manager {
 	 * @param $remoteId
 	 * @param $parent
 	 * @param $shareType
-	 *
-	 * @return void
-	 * @throws \Doctrine\DBAL\Driver\Exception
+	 * @return bool
 	 */
-	private function writeShareToDb($remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, $shareType): void {
+	private function writeShareToDb($remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, $shareType) {
 		$query = $this->connection->prepare('
 				INSERT INTO `*PREFIX*share_external`
 					(`remote`, `share_token`, `password`, `name`, `owner`, `user`, `mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `share_type`)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			');
-		$query->execute([$remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, $shareType]);
+		return $query->execute([$remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, $shareType]);
 	}
 
 	/**
@@ -225,8 +222,9 @@ class Manager {
 			FROM  `*PREFIX*share_external`
 			WHERE `id` = ?');
 		$result = $getShare->execute([$id]);
-		$share = $result->fetch();
-		$result->closeCursor();
+
+		$share = $result ? $getShare->fetch() : [];
+
 		$validShare = is_array($share) && isset($share['share_type']) && isset($share['user']);
 
 		// check if the user is allowed to access it
@@ -269,24 +267,19 @@ class Manager {
 				WHERE `id` = ? AND `user` = ?');
 				$userShareAccepted = $acceptShare->execute([1, $mountPoint, $hash, $id, $this->uid]);
 			} else {
-				try {
-					$this->writeShareToDb(
-						$share['remote'],
-						$share['share_token'],
-						$share['password'],
-						$share['name'],
-						$share['owner'],
-						$this->uid,
-						$mountPoint, $hash, 1,
-						$share['remote_id'],
-						$id,
-						$share['share_type']);
-					$result = true;
-				} catch (Exception $e) {
-					$result = false;
-				}
+				$result = $this->writeShareToDb(
+					$share['remote'],
+					$share['share_token'],
+					$share['password'],
+					$share['name'],
+					$share['owner'],
+					$this->uid,
+					$mountPoint, $hash, 1,
+					$share['remote_id'],
+					$id,
+					$share['share_type']);
 			}
-			if ($userShareAccepted !== false) {
+			if ($userShareAccepted === true) {
 				$this->sendFeedbackToRemote($share['remote'], $share['share_token'], $share['remote_id'], 'accept');
 				$event = new FederatedShareAddedEvent($share['remote']);
 				$this->eventDispatcher->dispatchTyped($event);
@@ -319,24 +312,19 @@ class Manager {
 			$this->processNotification($id);
 			$result = true;
 		} elseif ($share && (int)$share['share_type'] === IShare::TYPE_GROUP) {
-			try {
-				$this->writeShareToDb(
-					$share['remote'],
-					$share['share_token'],
-					$share['password'],
-					$share['name'],
-					$share['owner'],
-					$this->uid,
-					$share['mountpoint'],
-					$share['mountpoint_hash'],
-					0,
-					$share['remote_id'],
-					$id,
-					$share['share_type']);
-				$result = true;
-			} catch (Exception $e) {
-				$result = false;
-			}
+			$result = $this->writeShareToDb(
+				$share['remote'],
+				$share['share_token'],
+				$share['password'],
+				$share['name'],
+				$share['owner'],
+				$this->uid,
+				$share['mountpoint'],
+				$share['mountpoint_hash'],
+				0,
+				$share['remote_id'],
+				$id,
+				$share['share_type']);
 			$this->processNotification($id);
 		}
 
@@ -453,7 +441,7 @@ class Manager {
 		$data['manager'] = $this;
 		$mountPoint = '/' . $this->uid . '/files' . $data['mountpoint'];
 		$data['mountpoint'] = $mountPoint;
-		$data['certificateManager'] = \OC::$server->getCertificateManager();
+		$data['certificateManager'] = \OC::$server->getCertificateManager($this->uid);
 		return new Mount(self::STORAGE, $mountPoint, $data, $this, $this->storageLoader);
 	}
 
@@ -496,50 +484,47 @@ class Manager {
 		return $result;
 	}
 
-	public function removeShare($mountPoint): bool {
+	public function removeShare($mountPoint) {
 		$mountPointObj = $this->mountManager->find($mountPoint);
 		$id = $mountPointObj->getStorage()->getCache()->getId('');
 
 		$mountPoint = $this->stripPath($mountPoint);
 		$hash = md5($mountPoint);
 
-		try {
-			$getShare = $this->connection->prepare('
-				SELECT `remote`, `share_token`, `remote_id`, `share_type`, `id`
-				FROM  `*PREFIX*share_external`
-				WHERE `mountpoint_hash` = ? AND `user` = ?');
-			$result = $getShare->execute([$hash, $this->uid]);
-			$share = $result->fetch();
-			$result->closeCursor();
-			if ($share !== false && (int)$share['share_type'] === IShare::TYPE_USER) {
-				try {
-					$this->sendFeedbackToRemote($share['remote'], $share['share_token'], $share['remote_id'], 'decline');
-				} catch (\Throwable $e) {
-					// if we fail to notify the remote (probably cause the remote is down)
-					// we still want the share to be gone to prevent undeletable remotes
-				}
+		$getShare = $this->connection->prepare('
+			SELECT `remote`, `share_token`, `remote_id`, `share_type`, `id`
+			FROM  `*PREFIX*share_external`
+			WHERE `mountpoint_hash` = ? AND `user` = ?');
+		$result = $getShare->execute([$hash, $this->uid]);
 
-				$query = $this->connection->prepare('
-				DELETE FROM `*PREFIX*share_external`
-				WHERE `id` = ?
-				');
-				$deleteResult = $query->execute([(int)$share['id']]);
-				$deleteResult->closeCursor();
-			} elseif ($share !== false && (int)$share['share_type'] === IShare::TYPE_GROUP) {
-				$query = $this->connection->prepare('
-					UPDATE `*PREFIX*share_external`
-					SET `accepted` = ?
-					WHERE `id` = ?');
-				$updateResult = $query->execute([0, (int)$share['id']]);
-				$updateResult->closeCursor();
+		$share = $getShare->fetch();
+		$getShare->closeCursor();
+		if ($result && $share !== false && (int)$share['share_type'] === IShare::TYPE_USER) {
+			try {
+				$this->sendFeedbackToRemote($share['remote'], $share['share_token'], $share['remote_id'], 'decline');
+			} catch (\Throwable $e) {
+				// if we fail to notify the remote (probably cause the remote is down)
+				// we still want the share to be gone to prevent undeletable remotes
 			}
 
-			$this->removeReShares($id);
-		} catch (\Doctrine\DBAL\Exception $ex) {
-			return false;
+			$query = $this->connection->prepare('
+			DELETE FROM `*PREFIX*share_external`
+			WHERE `id` = ?
+			');
+			$result = (bool)$query->execute([(int)$share['id']]);
+		} elseif ($result && $share !== false && (int)$share['share_type'] === IShare::TYPE_GROUP) {
+			$query = $this->connection->prepare('
+				UPDATE `*PREFIX*share_external`
+				SET `accepted` = ?
+				WHERE `id` = ?');
+			$result = (bool)$query->execute([0, (int)$share['id']]);
 		}
 
-		return true;
+		if ($result) {
+			$this->removeReShares($id);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -569,31 +554,27 @@ class Manager {
 	 * remove all shares for user $uid if the user was deleted
 	 *
 	 * @param string $uid
+	 * @return bool
 	 */
-	public function removeUserShares($uid): bool {
-		try {
-			$getShare = $this->connection->prepare('
-				SELECT `remote`, `share_token`, `remote_id`
-				FROM  `*PREFIX*share_external`
-				WHERE `user` = ?');
-			$result = $getShare->execute([$uid]);
-			$shares = $result->fetchAll();
-			$result->closeCursor();
+	public function removeUserShares($uid) {
+		$getShare = $this->connection->prepare('
+			SELECT `remote`, `share_token`, `remote_id`
+			FROM  `*PREFIX*share_external`
+			WHERE `user` = ?');
+		$result = $getShare->execute([$uid]);
+
+		if ($result) {
+			$shares = $getShare->fetchAll();
 			foreach ($shares as $share) {
 				$this->sendFeedbackToRemote($share['remote'], $share['share_token'], $share['remote_id'], 'decline');
 			}
-
-			$query = $this->connection->prepare('
-				DELETE FROM `*PREFIX*share_external`
-				WHERE `user` = ?
-			');
-			$deleteResult = $query->execute([$uid]);
-			$deleteResult->closeCursor();
-		} catch (\Doctrine\DBAL\Exception $ex) {
-			return false;
 		}
 
-		return true;
+		$query = $this->connection->prepare('
+			DELETE FROM `*PREFIX*share_external`
+			WHERE `user` = ?
+		');
+		return (bool)$query->execute([$uid]);
 	}
 
 	/**
@@ -640,14 +621,9 @@ class Manager {
 		}
 		$query .= ' ORDER BY `id` ASC';
 
-		$sharesQuery = $this->connection->prepare($query);
-		try {
-			$result = $sharesQuery->execute($parameters);
-			$shares = $result->fetchAll();
-			$result->closeCursor();
-			return $shares;
-		} catch (\Doctrine\DBAL\Exception $e) {
-			return [];
-		}
+		$shares = $this->connection->prepare($query);
+		$result = $shares->execute($parameters);
+
+		return $result ? $shares->fetchAll() : [];
 	}
 }

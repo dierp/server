@@ -32,9 +32,6 @@
 namespace OC;
 
 use OC\Hooks\PublicEmitter;
-use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Group\Events\SubAdminAddedEvent;
-use OCP\Group\Events\SubAdminRemovedEvent;
 use OCP\Group\ISubAdmin;
 use OCP\IDBConnection;
 use OCP\IGroup;
@@ -53,9 +50,6 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 	/** @var IDBConnection */
 	private $dbConn;
 
-	/** @var IEventDispatcher */
-	private $eventDispatcher;
-
 	/**
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
@@ -63,12 +57,10 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 	 */
 	public function __construct(IUserManager $userManager,
 								IGroupManager $groupManager,
-								IDBConnection $dbConn,
-								IEventDispatcher $eventDispatcher) {
+								IDBConnection $dbConn) {
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
 		$this->dbConn = $dbConn;
-		$this->eventDispatcher = $eventDispatcher;
 
 		$this->userManager->listen('\OC\User', 'postDelete', function ($user) {
 			$this->post_deleteUser($user);
@@ -93,10 +85,8 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 			])
 			->execute();
 
-		/** @deprecated 21.0.0 - use type SubAdminAddedEvent instead  */
 		$this->emit('\OC\SubAdmin', 'postCreateSubAdmin', [$user, $group]);
-		$event = new SubAdminAddedEvent($group, $user);
-		$this->eventDispatcher->dispatchTyped($event);
+		\OC_Hook::emit("OC_SubAdmin", "post_createSubAdmin", ["gid" => $group->getGID()]);
 	}
 
 	/**
@@ -112,10 +102,8 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 			->andWhere($qb->expr()->eq('uid', $qb->createNamedParameter($user->getUID())))
 			->execute();
 
-		/** @deprecated 21.0.0 - use type SubAdminRemovedEvent instead  */
 		$this->emit('\OC\SubAdmin', 'postDeleteSubAdmin', [$user, $group]);
-		$event = new SubAdminRemovedEvent($group, $user);
-		$this->eventDispatcher->dispatchTyped($event);
+		\OC_Hook::emit("OC_SubAdmin", "post_deleteSubAdmin", ["gid" => $group->getGID()]);
 	}
 
 	/**
@@ -212,7 +200,7 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 			$group = $this->groupManager->get($row['gid']);
 			if (!is_null($user) && !is_null($group)) {
 				$subadmins[] = [
-					'user' => $user,
+					'user'  => $user,
 					'group' => $group
 				];
 			}
@@ -240,7 +228,7 @@ class SubAdmin extends PublicEmitter implements ISubAdmin {
 			->andWhere($qb->expr()->eq('uid', $qb->createNamedParameter($user->getUID())))
 			->execute();
 
-		$fetch = $result->fetch();
+		$fetch =  $result->fetch();
 		$result->closeCursor();
 		$result = !empty($fetch) ? true : false;
 

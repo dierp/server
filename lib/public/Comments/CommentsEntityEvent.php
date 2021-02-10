@@ -32,9 +32,6 @@ use OCP\EventDispatcher\Event;
  * @since 9.1.0
  */
 class CommentsEntityEvent extends Event {
-	/**
-	 * @deprecated 22.0.0
-	 */
 	public const EVENT_ENTITY = 'OCP\Comments\ICommentsManager::registerEntity';
 
 	/** @var string */

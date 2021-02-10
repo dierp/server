@@ -34,7 +34,6 @@ namespace OC\AppFramework;
 
 use OC\AppFramework\DependencyInjection\DIContainer;
 use OC\AppFramework\Http\Dispatcher;
-use OC\AppFramework\Http\Request;
 use OC\HintException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ICallbackResponse;
@@ -61,7 +60,7 @@ class App {
 	 * the transformed app id, defaults to OCA\
 	 * @return string the starting namespace for the app
 	 */
-	public static function buildAppNamespace(string $appId, string $topNamespace = 'OCA\\'): string {
+	public static function buildAppNamespace(string $appId, string $topNamespace='OCA\\'): string {
 		// Hit the cache!
 		if (isset(self::$nameSpaceCache[$appId])) {
 			return $topNamespace . self::$nameSpaceCache[$appId];
@@ -89,7 +88,7 @@ class App {
 		return $topNamespace . self::$nameSpaceCache[$appId];
 	}
 
-	public static function getAppIdForClass(string $className, string $topNamespace = 'OCA\\'): ?string {
+	public static function getAppIdForClass(string $className, string $topNamespace='OCA\\'): ?string {
 		if (strpos($className, $topNamespace) !== 0) {
 			return null;
 		}
@@ -115,13 +114,9 @@ class App {
 	 */
 	public static function main(string $controllerName, string $methodName, DIContainer $container, array $urlParams = null) {
 		if (!is_null($urlParams)) {
-			/** @var Request $request */
-			$request = $container->query(IRequest::class);
-			$request->setUrlParameters($urlParams);
+			$container->query(IRequest::class)->setUrlParameters($urlParams);
 		} elseif (isset($container['urlParams']) && !is_null($container['urlParams'])) {
-			/** @var Request $request */
-			$request = $container->query(IRequest::class);
-			$request->setUrlParameters($container['urlParams']);
+			$container->query(IRequest::class)->setUrlParameters($container['urlParams']);
 		}
 		$appName = $container['AppName'];
 
@@ -228,7 +223,7 @@ class App {
 
 		$dispatcher = $container['Dispatcher'];
 
-		list(, , $output) = $dispatcher->dispatch($controller, $methodName);
+		list(, , $output) =  $dispatcher->dispatch($controller, $methodName);
 		return $output;
 	}
 }

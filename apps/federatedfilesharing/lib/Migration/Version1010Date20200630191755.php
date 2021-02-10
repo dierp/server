@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2020 Joas Schilling <coding@schilljs.com>
  *
  * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -27,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\FederatedFileSharing\Migration;
 
 use Closure;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;

@@ -40,9 +40,6 @@
 namespace OCP;
 
 use Doctrine\DBAL\Schema\Schema;
-use OCP\DB\Exception;
-use OCP\DB\IPreparedStatement;
-use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 /**
@@ -51,34 +48,11 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
  * @since 6.0.0
  */
 interface IDBConnection {
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const ADD_MISSING_INDEXES_EVENT = self::class . '::ADD_MISSING_INDEXES';
-
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const CHECK_MISSING_INDEXES_EVENT = self::class . '::CHECK_MISSING_INDEXES';
-
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const ADD_MISSING_PRIMARY_KEYS_EVENT = self::class . '::ADD_MISSING_PRIMARY_KEYS';
-
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const CHECK_MISSING_PRIMARY_KEYS_EVENT = self::class . '::CHECK_MISSING_PRIMARY_KEYS';
-
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const ADD_MISSING_COLUMNS_EVENT = self::class . '::ADD_MISSING_COLUMNS';
-
-	/**
-	 * @deprecated 22.0.0 this is an internal event
-	 */
 	public const CHECK_MISSING_COLUMNS_EVENT = self::class . '::CHECK_MISSING_COLUMNS';
 
 	/**
@@ -94,11 +68,10 @@ interface IDBConnection {
 	 * @param string $sql the sql query with ? placeholder for params
 	 * @param int $limit the maximum number of rows
 	 * @param int $offset from which row we want to start
-	 * @return IPreparedStatement The prepared statement.
+	 * @return \Doctrine\DBAL\Driver\Statement The prepared statement.
 	 * @since 6.0.0
-	 * @throws Exception since 21.0.0
 	 */
-	public function prepare($sql, $limit = null, $offset = null): IPreparedStatement;
+	public function prepare($sql, $limit=null, $offset=null);
 
 	/**
 	 * Executes an, optionally parameterized, SQL query.
@@ -106,14 +79,13 @@ interface IDBConnection {
 	 * If the query is parameterized, a prepared statement is used.
 	 * If an SQLLogger is configured, the execution is logged.
 	 *
-	 * @param string $sql The SQL query to execute.
+	 * @param string $query The SQL query to execute.
 	 * @param string[] $params The parameters to bind to the query, if any.
 	 * @param array $types The types the previous parameters are in.
-	 * @return IResult The executed statement.
+	 * @return \Doctrine\DBAL\Driver\Statement The executed statement.
 	 * @since 8.0.0
-	 * @throws Exception since 21.0.0
 	 */
-	public function executeQuery(string $sql, array $params = [], $types = []): IResult;
+	public function executeQuery($query, array $params = [], $types = []);
 
 	/**
 	 * Executes an SQL INSERT/UPDATE/DELETE query with the given parameters
@@ -121,41 +93,21 @@ interface IDBConnection {
 	 *
 	 * This method supports PDO binding types as well as DBAL mapping types.
 	 *
-	 * @param string $sql The SQL query.
+	 * @param string $query The SQL query.
 	 * @param array $params The query parameters.
 	 * @param array $types The parameter types.
-	 * @return int The number of affected rows.
+	 * @return integer The number of affected rows.
 	 * @since 8.0.0
-	 * @throws Exception since 21.0.0
-	 *
-	 * @deprecated 21.0.0 use executeStatement
 	 */
-	public function executeUpdate(string $sql, array $params = [], array $types = []): int;
-
-	/**
-	 * Executes an SQL INSERT/UPDATE/DELETE query with the given parameters
-	 * and returns the number of affected rows.
-	 *
-	 * This method supports PDO binding types as well as DBAL mapping types.
-	 *
-	 * @param string $sql The SQL query.
-	 * @param array $params The query parameters.
-	 * @param array $types The parameter types.
-	 * @return int The number of affected rows.
-	 * @since 21.0.0
-	 * @throws Exception since 21.0.0
-	 */
-	public function executeStatement($sql, array $params = [], array $types = []): int;
+	public function executeUpdate($query, array $params = [], array $types = []);
 
 	/**
 	 * Used to get the id of the just inserted element
 	 * @param string $table the name of the table where we inserted the item
 	 * @return int the id of the inserted element
 	 * @since 6.0.0
-	 * @throws Exception since 21.0.0
-	 * @deprecated 21.0.0 use \OCP\DB\QueryBuilder\IQueryBuilder::getLastInsertId
 	 */
-	public function lastInsertId(string $table): int;
+	public function lastInsertId($table = null);
 
 	/**
 	 * Insert a row if the matching row does not exists. To accomplish proper race condition avoidance
@@ -168,11 +120,11 @@ interface IDBConnection {
 	 *				If this is null or an empty array, all keys of $input will be compared
 	 *				Please note: text fields (clob) must not be used in the compare array
 	 * @return int number of inserted rows
-	 * @throws Exception used to be the removed dbal exception, since 21.0.0 it's \OCP\DB\Exception
+	 * @throws \Doctrine\DBAL\DBALException
 	 * @since 6.0.0 - parameter $compare was added in 8.1.0, return type changed from boolean in 8.1.0
 	 * @deprecated 15.0.0 - use unique index and "try { $db->insert() } catch (UniqueConstraintViolationException $e) {}" instead, because it is more reliable and does not have the risk for deadlocks - see https://github.com/nextcloud/server/pull/12371
 	 */
-	public function insertIfNotExist(string $table, array $input, array $compare = null);
+	public function insertIfNotExist($table, $input, array $compare = null);
 
 
 	/**
@@ -196,11 +148,11 @@ interface IDBConnection {
 	 * @param array $values (column name => value)
 	 * @param array $updatePreconditionValues ensure values match preconditions (column name => value)
 	 * @return int number of new rows
-	 * @throws Exception used to be the removed dbal exception, since 21.0.0 it's \OCP\DB\Exception
+	 * @throws \Doctrine\DBAL\DBALException
 	 * @throws PreconditionNotMetException
 	 * @since 9.0.0
 	 */
-	public function setValues($table, array $keys, array $values, array $updatePreconditionValues = []): int;
+	public function setValues($table, array $keys, array $values, array $updatePreconditionValues = []);
 
 	/**
 	 * Create an exclusive read+write lock on a table
@@ -210,25 +162,22 @@ interface IDBConnection {
 	 * transaction while holding a lock.
 	 *
 	 * @param string $tableName
-	 * @throws Exception since 21.0.0
 	 * @since 9.1.0
 	 */
-	public function lockTable($tableName): void;
+	public function lockTable($tableName);
 
 	/**
 	 * Release a previous acquired lock again
 	 *
-	 * @throws Exception since 21.0.0
 	 * @since 9.1.0
 	 */
-	public function unlockTable(): void;
+	public function unlockTable();
 
 	/**
 	 * Start a transaction
 	 * @since 6.0.0
-	 * @throws Exception since 21.0.0
 	 */
-	public function beginTransaction(): void;
+	public function beginTransaction();
 
 	/**
 	 * Check if a transaction is active
@@ -236,36 +185,32 @@ interface IDBConnection {
 	 * @return bool
 	 * @since 8.2.0
 	 */
-	public function inTransaction(): bool;
+	public function inTransaction();
 
 	/**
 	 * Commit the database changes done during a transaction that is in progress
 	 * @since 6.0.0
-	 * @throws Exception since 21.0.0
 	 */
-	public function commit(): void;
+	public function commit();
 
 	/**
 	 * Rollback the database changes done during a transaction that is in progress
 	 * @since 6.0.0
-	 * @throws Exception since 21.0.0
 	 */
-	public function rollBack(): void;
+	public function rollBack();
 
 	/**
 	 * Gets the error code and message as a string for logging
 	 * @return string
 	 * @since 6.0.0
-	 * @deprecated 21.0.0 doesn't return anything meaningful
 	 */
-	public function getError(): string;
+	public function getError();
 
 	/**
 	 * Fetch the SQLSTATE associated with the last database operation.
 	 *
 	 * @return integer The last error code.
 	 * @since 8.0.0
-	 * @deprecated 21.0.0 doesn't return anything anymore
 	 */
 	public function errorCode();
 
@@ -274,7 +219,6 @@ interface IDBConnection {
 	 *
 	 * @return array The last error information.
 	 * @since 8.0.0
-	 * @deprecated 21.0.0 doesn't return anything anymore
 	 */
 	public function errorInfo();
 
@@ -282,23 +226,22 @@ interface IDBConnection {
 	 * Establishes the connection with the database.
 	 *
 	 * @return bool
-	 * @throws Exception since 21.0.0
 	 * @since 8.0.0
 	 */
-	public function connect(): bool;
+	public function connect();
 
 	/**
 	 * Close the database connection
 	 * @since 8.0.0
 	 */
-	public function close(): void;
+	public function close();
 
 	/**
 	 * Quotes a given input parameter.
 	 *
 	 * @param mixed $input Parameter to be quoted.
 	 * @param int $type Type of the parameter.
-	 * @return mixed The quoted parameter.
+	 * @return string The quoted parameter.
 	 * @since 8.0.0
 	 */
 	public function quote($input, $type = IQueryBuilder::PARAM_STR);
@@ -316,20 +259,18 @@ interface IDBConnection {
 	 * Drop a table from the database if it exists
 	 *
 	 * @param string $table table name without the prefix
-	 * @throws Exception since 21.0.0
 	 * @since 8.0.0
 	 */
-	public function dropTable(string $table): void;
+	public function dropTable($table);
 
 	/**
 	 * Check if a table exists
 	 *
 	 * @param string $table table name without the prefix
 	 * @return bool
-	 * @throws Exception since 21.0.0
 	 * @since 8.0.0
 	 */
-	public function tableExists(string $table): bool;
+	public function tableExists($table);
 
 	/**
 	 * Escape a parameter to be used in a LIKE query
@@ -338,7 +279,7 @@ interface IDBConnection {
 	 * @return string
 	 * @since 9.0.0
 	 */
-	public function escapeLikeParameter(string $param): string;
+	public function escapeLikeParameter($param);
 
 	/**
 	 * Check whether or not the current database support 4byte wide unicode
@@ -346,23 +287,21 @@ interface IDBConnection {
 	 * @return bool
 	 * @since 11.0.0
 	 */
-	public function supports4ByteText(): bool;
+	public function supports4ByteText();
 
 	/**
 	 * Create the schema of the connected database
 	 *
 	 * @return Schema
-	 * @throws Exception since 21.0.0
 	 * @since 13.0.0
 	 */
-	public function createSchema(): Schema;
+	public function createSchema();
 
 	/**
 	 * Migrate the database to the given schema
 	 *
 	 * @param Schema $toSchema
-	 * @throws Exception since 21.0.0
 	 * @since 13.0.0
 	 */
-	public function migrateToSchema(Schema $toSchema): void;
+	public function migrateToSchema(Schema $toSchema);
 }

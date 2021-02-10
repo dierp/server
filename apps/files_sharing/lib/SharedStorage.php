@@ -4,7 +4,6 @@
  *
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Björn Schießle <bjoern@schiessle.org>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Michael Gapczynski <GapczynskiM@gmail.com>
  * @author Morris Jobke <hey@morrisjobke.de>
@@ -13,7 +12,7 @@
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author scambra <sergio@entrecables.com>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -298,7 +297,7 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 	}
 
 	/**
-	 * see https://www.php.net/manual/en/function.rename.php
+	 * see http://php.net/manual/en/function.rename.php
 	 *
 	 * @param string $path1
 	 * @param string $path2

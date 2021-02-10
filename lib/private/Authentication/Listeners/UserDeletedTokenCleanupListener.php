@@ -6,7 +6,6 @@ declare(strict_types=1);
  * @copyright 2020 Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -30,8 +29,8 @@ namespace OC\Authentication\Listeners;
 use OC\Authentication\Token\Manager;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\ILogger;
 use OCP\User\Events\UserDeletedEvent;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -42,11 +41,11 @@ class UserDeletedTokenCleanupListener implements IEventListener {
 	/** @var Manager */
 	private $manager;
 
-	/** @var LoggerInterface */
+	/** @var ILogger */
 	private $logger;
 
 	public function __construct(Manager $manager,
-								LoggerInterface $logger) {
+								ILogger $logger) {
 		$this->manager = $manager;
 		$this->logger = $logger;
 	}
@@ -68,8 +67,9 @@ class UserDeletedTokenCleanupListener implements IEventListener {
 				$this->manager->invalidateTokenById($uid, $token->getId());
 			}
 		} catch (Throwable $e) {
-			$this->logger->error('Could not clean up auth tokens after user deletion: ' . $e->getMessage(), [
-				'exception' => $e,
+			$this->logger->logException($e, [
+				'message' => 'Could not clean up auth tokens after user deletion: ' . $e->getMessage(),
+				'error' => ILogger::ERROR,
 			]);
 		}
 	}

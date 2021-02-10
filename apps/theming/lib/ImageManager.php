@@ -4,14 +4,9 @@
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author Gary Kim <gary@garykim.dev>
- * @author Jacob Neplokh <me@jacobneplokh.com>
- * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
- * @author Julien Veyssier <eneiluj@posteo.net>
  * @author Julius Haertl <jus@bitgrid.net>
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Michael Weimann <mail@michael-weimann.eu>
- * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license GNU AGPL version 3 or any later version
@@ -106,9 +101,10 @@ class ImageManager {
 	 * @throws NotPermittedException
 	 */
 	public function getImage(string $key, bool $useSvg = true): ISimpleFile {
-		$logo = $this->config->getAppValue('theming', $key . 'Mime', '');
+		$pngFile = null;
+		$logo = $this->config->getAppValue('theming', $key . 'Mime', false);
 		$folder = $this->appData->getFolder('images');
-		if ($logo === '' || !$folder->fileExists($key)) {
+		if ($logo === false || !$folder->fileExists($key)) {
 			throw new NotFoundException();
 		}
 		if (!$useSvg && $this->shouldReplaceIcons()) {
@@ -120,13 +116,16 @@ class ImageManager {
 					$finalIconFile->setImageFormat('png32');
 					$pngFile = $folder->newFile($key . '.png');
 					$pngFile->putContent($finalIconFile->getImageBlob());
-					return $pngFile;
 				} catch (\ImagickException $e) {
 					$this->logger->info('The image was requested to be no SVG file, but converting it to PNG failed: ' . $e->getMessage());
+					$pngFile = null;
 				}
 			} else {
-				return $folder->getFile($key . '.png');
+				$pngFile = $folder->getFile($key . '.png');
 			}
+		}
+		if ($pngFile !== null) {
+			return $pngFile;
 		}
 		return $folder->getFile($key);
 	}
@@ -224,7 +223,7 @@ class ImageManager {
 			throw new \Exception('Unsupported image type');
 		}
 
-		if ($key === 'background' && strpos($detectedMimeType, 'image/svg') === false && strpos($detectedMimeType, 'image/gif') === false) {
+		if ($key === 'background' && strpos($detectedMimeType, 'image/svg') === false) {
 			// Optimize the image since some people may upload images that will be
 			// either to big or are not progressive rendering.
 			$newImage = @imagecreatefromstring(file_get_contents($tmpFile));
@@ -263,11 +262,6 @@ class ImageManager {
 		if ($key !== 'favicon' || $this->shouldReplaceIcons() === true) {
 			$supportedFormats[] = 'image/svg+xml';
 			$supportedFormats[] = 'image/svg';
-		}
-
-		if ($key === 'favicon') {
-			$supportedFormats[] = 'image/x-icon';
-			$supportedFormats[] = 'image/vnd.microsoft.icon';
 		}
 
 		return $supportedFormats;

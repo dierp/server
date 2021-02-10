@@ -19,10 +19,9 @@ declare(strict_types=1);
  * @author Maxence Lange <maxence@nextcloud.com>
  * @author Michael Jobst <mjobst+github@tecratech.de>
  * @author Morris Jobke <hey@morrisjobke.de>
- * @author Richard Steinmetz <richard@steinmetz.cloud>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  * @author waleczny <michal@walczak.xyz>
  *
  * @license AGPL-3.0
@@ -305,14 +304,6 @@ class ShareAPIController extends OCSController {
 
 			try {
 				$result = array_merge($result, $this->getRoomShareHelper()->formatShare($share));
-			} catch (QueryException $e) {
-			}
-		} elseif ($share->getShareType() === IShare::TYPE_DECK) {
-			$result['share_with'] = $share->getSharedWith();
-			$result['share_with_displayname'] = '';
-
-			try {
-				$result = array_merge($result, $this->getDeckShareHelper()->formatShare($share));
 			} catch (QueryException $e) {
 			}
 		}
@@ -615,12 +606,6 @@ class ShareAPIController extends OCSController {
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
 			}
-		} elseif ($shareType === IShare::TYPE_DECK) {
-			try {
-				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
-			} catch (QueryException $e) {
-				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$path->getPath()]));
-			}
 		} else {
 			throw new OCSBadRequestException($this->l->t('Unknown share type'));
 		}
@@ -653,9 +638,8 @@ class ShareAPIController extends OCSController {
 		$groupShares = $this->shareManager->getSharedWith($this->currentUser, IShare::TYPE_GROUP, $node, -1, 0);
 		$circleShares = $this->shareManager->getSharedWith($this->currentUser, IShare::TYPE_CIRCLE, $node, -1, 0);
 		$roomShares = $this->shareManager->getSharedWith($this->currentUser, IShare::TYPE_ROOM, $node, -1, 0);
-		$deckShares = $this->shareManager->getSharedWith($this->currentUser, IShare::TYPE_DECK, $node, -1, 0);
 
-		$shares = array_merge($userShares, $groupShares, $circleShares, $roomShares, $deckShares);
+		$shares = array_merge($userShares, $groupShares, $circleShares, $roomShares);
 
 		$filteredShares = array_filter($shares, function (IShare $share) {
 			return $share->getShareOwner() !== $this->currentUser;
@@ -1064,7 +1048,7 @@ class ShareAPIController extends OCSController {
 			}
 
 			if ($permissions !== null) {
-				$newPermissions = $permissions;
+				$newPermissions = (int) $permissions;
 				$newPermissions = $newPermissions & ~Constants::PERMISSION_SHARE;
 			}
 
@@ -1147,6 +1131,7 @@ class ShareAPIController extends OCSController {
 		// NOT A LINK SHARE
 		else {
 			if ($permissions !== null) {
+				$permissions = (int) $permissions;
 				$share->setPermissions($permissions);
 			}
 
@@ -1314,14 +1299,6 @@ class ShareAPIController extends OCSController {
 			}
 		}
 
-		if ($share->getShareType() === IShare::TYPE_DECK) {
-			try {
-				return $this->getDeckShareHelper()->canAccessShare($share, $this->currentUser);
-			} catch (QueryException $e) {
-				return false;
-			}
-		}
-
 		return false;
 	}
 
@@ -1397,8 +1374,7 @@ class ShareAPIController extends OCSController {
 	 */
 	protected function canDeleteShareFromSelf(\OCP\Share\IShare $share): bool {
 		if ($share->getShareType() !== IShare::TYPE_GROUP &&
-			$share->getShareType() !== IShare::TYPE_ROOM &&
-			$share->getShareType() !== IShare::TYPE_DECK
+			$share->getShareType() !== IShare::TYPE_ROOM
 		) {
 			return false;
 		}
@@ -1422,14 +1398,6 @@ class ShareAPIController extends OCSController {
 		if ($share->getShareType() === IShare::TYPE_ROOM) {
 			try {
 				return $this->getRoomShareHelper()->canAccessShare($share, $this->currentUser);
-			} catch (QueryException $e) {
-				return false;
-			}
-		}
-
-		if ($share->getShareType() === IShare::TYPE_DECK) {
-			try {
-				return $this->getDeckShareHelper()->canAccessShare($share, $this->currentUser);
 			} catch (QueryException $e) {
 				return false;
 			}
@@ -1509,15 +1477,6 @@ class ShareAPIController extends OCSController {
 			// Do nothing, just try the other share type
 		}
 
-		try {
-			if ($this->shareManager->shareProviderExists(IShare::TYPE_DECK)) {
-				$share = $this->shareManager->getShareById('deck:' . $id, $this->currentUser);
-				return $share;
-			}
-		} catch (ShareNotFound $e) {
-			// Do nothing, just try the other share type
-		}
-
 		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
 			throw new ShareNotFound();
 		}
@@ -1561,25 +1520,9 @@ class ShareAPIController extends OCSController {
 			throw new QueryException();
 		}
 
-		return $this->serverContainer->get('\OCA\Talk\Share\Helper\ShareAPIController');
+		return $this->serverContainer->query('\OCA\Talk\Share\Helper\ShareAPIController');
 	}
 
-	/**
-	 * Returns the helper of ShareAPIHelper for deck shares.
-	 *
-	 * If the Deck application is not enabled or the helper is not available
-	 * a QueryException is thrown instead.
-	 *
-	 * @return \OCA\Deck\Sharing\ShareAPIHelper
-	 * @throws QueryException
-	 */
-	private function getDeckShareHelper() {
-		if (!$this->appManager->isEnabledForUser('deck')) {
-			throw new QueryException();
-		}
-
-		return $this->serverContainer->get('\OCA\Deck\Sharing\ShareAPIHelper');
-	}
 
 	/**
 	 * @param string $viewer
@@ -1596,8 +1539,7 @@ class ShareAPIController extends OCSController {
 			IShare::TYPE_EMAIL,
 			IShare::TYPE_EMAIL,
 			IShare::TYPE_CIRCLE,
-			IShare::TYPE_ROOM,
-			IShare::TYPE_DECK
+			IShare::TYPE_ROOM
 		];
 
 		// Should we assume that the (currentUser) viewer is the owner of the node !?
@@ -1750,8 +1692,6 @@ class ShareAPIController extends OCSController {
 		// TALK SHARES
 		$roomShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_ROOM, $path, $reshares, -1, 0);
 
-		$deckShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_DECK, $path, $reshares, -1, 0);
-
 		// FEDERATION
 		if ($this->shareManager->outgoingServer2ServerSharesAllowed()) {
 			$federatedShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE, $path, $reshares, -1, 0);
@@ -1764,7 +1704,7 @@ class ShareAPIController extends OCSController {
 			$federatedGroupShares = [];
 		}
 
-		return array_merge($userShares, $groupShares, $linkShares, $mailShares, $circleShares, $roomShares, $deckShares, $federatedShares, $federatedGroupShares);
+		return array_merge($userShares, $groupShares, $linkShares, $mailShares, $circleShares, $roomShares, $federatedShares, $federatedGroupShares);
 	}
 
 

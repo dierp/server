@@ -5,7 +5,6 @@
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Christopher Schäpers <kondou@ts.unde.re>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Kesselberg <mail@danielkesselberg.de>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Morris Jobke <hey@morrisjobke.de>
@@ -339,7 +338,7 @@ class TAR extends Archive {
 	 *
 	 * @param string $path
 	 * @param string $mode
-	 * @return bool|resource
+	 * @return resource
 	 */
 	public function getStream($path, $mode) {
 		if (strrpos($path, '.') !== false) {
@@ -381,15 +380,5 @@ class TAR extends Archive {
 		}
 		$types = [null, 'gz', 'bz'];
 		$this->tar = new \Archive_Tar($this->path, $types[self::getTarType($this->path)]);
-	}
-
-	/**
-	 * Get error object from archive_tar.
-	 */
-	public function getError(): ?\PEAR_Error {
-		if ($this->tar instanceof \Archive_Tar && $this->tar->error_object instanceof \PEAR_Error) {
-			return $this->tar->error_object;
-		}
-		return null;
 	}
 }

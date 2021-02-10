@@ -34,103 +34,103 @@ interface IFunctionBuilder {
 	/**
 	 * Calculates the MD5 hash of a given input
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $input The input to be hashed
+	 * @param mixed $input The input to be hashed
 	 *
 	 * @return IQueryFunction
 	 * @since 12.0.0
 	 */
-	public function md5($input): IQueryFunction;
+	public function md5($input);
 
 	/**
 	 * Combines two input strings
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $x The first input string
-	 * @param string|ILiteral|IParameter|IQueryFunction $y The seccond input string
+	 * @param mixed $x The first input string
+	 * @param mixed $y The seccond input string
 	 *
 	 * @return IQueryFunction
 	 * @since 12.0.0
 	 */
-	public function concat($x, $y): IQueryFunction;
+	public function concat($x, $y);
 
 	/**
 	 * Takes a substring from the input string
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $input The input string
-	 * @param string|ILiteral|IParameter|IQueryFunction $start The start of the substring, note that counting starts at 1
-	 * @param null|ILiteral|IParameter|IQueryFunction $length The length of the substring
+	 * @param mixed $input The input string
+	 * @param mixed $start The start of the substring, note that counting starts at 1
+	 * @param mixed $length The length of the substring
 	 *
 	 * @return IQueryFunction
 	 * @since 12.0.0
 	 */
-	public function substring($input, $start, $length = null): IQueryFunction;
+	public function substring($input, $start, $length = null);
 
 	/**
 	 * Takes the sum of all rows in a column
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $field the column to sum
+	 * @param mixed $field the column to sum
 	 *
 	 * @return IQueryFunction
 	 * @since 12.0.0
 	 */
-	public function sum($field): IQueryFunction;
+	public function sum($field);
 
 	/**
 	 * Transforms a string field or value to lower case
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $field
+	 * @param mixed $field
 	 * @return IQueryFunction
 	 * @since 14.0.0
 	 */
-	public function lower($field): IQueryFunction;
+	public function lower($field);
 
 	/**
-	 * @param string|ILiteral|IParameter|IQueryFunction $x The first input field or number
-	 * @param string|ILiteral|IParameter|IQueryFunction $y The second input field or number
+	 * @param mixed $x The first input field or number
+	 * @param mixed $y The second input field or number
 	 * @return IQueryFunction
 	 * @since 14.0.0
 	 */
-	public function add($x, $y): IQueryFunction;
+	public function add($x, $y);
 
 	/**
-	 * @param string|ILiteral|IParameter|IQueryFunction $x The first input field or number
-	 * @param string|ILiteral|IParameter|IQueryFunction $y The second input field or number
+	 * @param mixed $x The first input field or number
+	 * @param mixed $y The second input field or number
 	 * @return IQueryFunction
 	 * @since 14.0.0
 	 */
-	public function subtract($x, $y): IQueryFunction;
+	public function subtract($x, $y);
 
 	/**
-	 * @param string|ILiteral|IParameter|IQueryFunction $count The input to be counted
+	 * @param mixed $count The input to be counted
 	 * @param string $alias Alias for the counter
 	 *
 	 * @return IQueryFunction
 	 * @since 14.0.0
 	 */
-	public function count($count = '', $alias = ''): IQueryFunction;
+	public function count($count = '', $alias = '');
 
 	/**
 	 * Takes the maximum of all rows in a column
 	 *
 	 * If you want to get the maximum value of multiple columns in the same row, use `greatest` instead
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $field the column to maximum
+	 * @param mixed $field the column to maximum
 	 *
 	 * @return IQueryFunction
 	 * @since 18.0.0
 	 */
-	public function max($field): IQueryFunction;
+	public function max($field);
 
 	/**
 	 * Takes the minimum of all rows in a column
 	 *
 	 * If you want to get the minimum value of multiple columns in the same row, use `least` instead
 	 *
-	 * @param string|ILiteral|IParameter|IQueryFunction $field the column to minimum
+	 * @param mixed $field the column to minimum
 	 *
 	 * @return IQueryFunction
 	 * @since 18.0.0
 	 */
-	public function min($field): IQueryFunction;
+	public function min($field);
 
 	/**
 	 * Takes the maximum of multiple values
@@ -142,7 +142,7 @@ interface IFunctionBuilder {
 	 * @return IQueryFunction
 	 * @since 18.0.0
 	 */
-	public function greatest($x, $y): IQueryFunction;
+	public function greatest($x, $y);
 
 	/**
 	 * Takes the minimum of multiple values
@@ -154,5 +154,5 @@ interface IFunctionBuilder {
 	 * @return IQueryFunction
 	 * @since 18.0.0
 	 */
-	public function least($x, $y): IQueryFunction;
+	public function least($x, $y);
 }

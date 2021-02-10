@@ -26,11 +26,12 @@ declare(strict_types=1);
 
 namespace OCP\Files\Cache;
 
+use OC\Files\Cache\AbstractCacheEvent;
+
 /**
  * Event for when an existing entry in the cache gets updated
  *
  * @since 16.0.0
- * @deprecated 21.0.0 use CacheEntryUpdatedEvent instead
  */
-class CacheUpdateEvent extends CacheEntryUpdatedEvent {
+class CacheUpdateEvent extends AbstractCacheEvent {
 }

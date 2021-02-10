@@ -4,13 +4,11 @@
  *
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
  *
  * @license AGPL-3.0
  *
@@ -30,12 +28,10 @@
 
 namespace OC\DB\QueryBuilder;
 
-use Doctrine\DBAL\Platforms\MySQLPlatform;
-use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSQL94Platform;
+use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
-use Doctrine\DBAL\Query\QueryException;
-use OC\DB\ConnectionAdapter;
+use OC\DB\OracleConnection;
 use OC\DB\QueryBuilder\ExpressionBuilder\ExpressionBuilder;
 use OC\DB\QueryBuilder\ExpressionBuilder\MySqlExpressionBuilder;
 use OC\DB\QueryBuilder\ExpressionBuilder\OCIExpressionBuilder;
@@ -45,18 +41,16 @@ use OC\DB\QueryBuilder\FunctionBuilder\FunctionBuilder;
 use OC\DB\QueryBuilder\FunctionBuilder\OCIFunctionBuilder;
 use OC\DB\QueryBuilder\FunctionBuilder\PgSqlFunctionBuilder;
 use OC\DB\QueryBuilder\FunctionBuilder\SqliteFunctionBuilder;
-use OC\DB\ResultAdapter;
 use OC\SystemConfig;
-use OCP\DB\IResult;
-use OCP\DB\QueryBuilder\ILiteral;
 use OCP\DB\QueryBuilder\IParameter;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\DB\QueryBuilder\IQueryFunction;
+use OCP\IDBConnection;
 use OCP\ILogger;
 
 class QueryBuilder implements IQueryBuilder {
 
-	/** @var ConnectionAdapter */
+	/** @var \OCP\IDBConnection */
 	private $connection;
 
 	/** @var SystemConfig */
@@ -80,15 +74,15 @@ class QueryBuilder implements IQueryBuilder {
 	/**
 	 * Initializes a new QueryBuilder.
 	 *
-	 * @param ConnectionAdapter $connection
+	 * @param IDBConnection $connection
 	 * @param SystemConfig $systemConfig
 	 * @param ILogger $logger
 	 */
-	public function __construct(ConnectionAdapter $connection, SystemConfig $systemConfig, ILogger $logger) {
+	public function __construct(IDBConnection $connection, SystemConfig $systemConfig, ILogger $logger) {
 		$this->connection = $connection;
 		$this->systemConfig = $systemConfig;
 		$this->logger = $logger;
-		$this->queryBuilder = new \Doctrine\DBAL\Query\QueryBuilder($this->connection->getInner());
+		$this->queryBuilder = new \Doctrine\DBAL\Query\QueryBuilder($this->connection);
 		$this->helper = new QuoteHelper();
 	}
 
@@ -120,20 +114,17 @@ class QueryBuilder implements IQueryBuilder {
 	 * @return \OCP\DB\QueryBuilder\IExpressionBuilder
 	 */
 	public function expr() {
-		if ($this->connection->getDatabasePlatform() instanceof OraclePlatform) {
+		if ($this->connection instanceof OracleConnection) {
 			return new OCIExpressionBuilder($this->connection, $this);
-		}
-		if ($this->connection->getDatabasePlatform() instanceof PostgreSQL94Platform) {
+		} elseif ($this->connection->getDatabasePlatform() instanceof PostgreSqlPlatform) {
 			return new PgSqlExpressionBuilder($this->connection, $this);
-		}
-		if ($this->connection->getDatabasePlatform() instanceof MySQLPlatform) {
+		} elseif ($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {
 			return new MySqlExpressionBuilder($this->connection, $this);
-		}
-		if ($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
+		} elseif ($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
 			return new SqliteExpressionBuilder($this->connection, $this);
+		} else {
+			return new ExpressionBuilder($this->connection, $this);
 		}
-
-		return new ExpressionBuilder($this->connection, $this);
 	}
 
 	/**
@@ -153,17 +144,15 @@ class QueryBuilder implements IQueryBuilder {
 	 * @return \OCP\DB\QueryBuilder\IFunctionBuilder
 	 */
 	public function func() {
-		if ($this->connection->getDatabasePlatform() instanceof OraclePlatform) {
+		if ($this->connection instanceof OracleConnection) {
 			return new OCIFunctionBuilder($this->helper);
-		}
-		if ($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
+		} elseif ($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
 			return new SqliteFunctionBuilder($this->helper);
-		}
-		if ($this->connection->getDatabasePlatform() instanceof PostgreSQL94Platform) {
+		} elseif ($this->connection->getDatabasePlatform() instanceof PostgreSqlPlatform) {
 			return new PgSqlFunctionBuilder($this->helper);
+		} else {
+			return new FunctionBuilder($this->helper);
 		}
-
-		return new FunctionBuilder($this->helper);
 	}
 
 	/**
@@ -199,60 +188,33 @@ class QueryBuilder implements IQueryBuilder {
 	 * Uses {@see Connection::executeQuery} for select statements and {@see Connection::executeUpdate}
 	 * for insert, update and delete statements.
 	 *
-	 * @return IResult|int
+	 * @return \Doctrine\DBAL\Driver\Statement|int
 	 */
 	public function execute() {
 		if ($this->systemConfig->getValue('log_query', false)) {
-			try {
-				$params = [];
-				foreach ($this->getParameters() as $placeholder => $value) {
-					if ($value instanceof \DateTime) {
-						$params[] = $placeholder . ' => DateTime:\'' . $value->format('c') . '\'';
-					} elseif (is_array($value)) {
-						$params[] = $placeholder . ' => (\'' . implode('\', \'', $value) . '\')';
-					} else {
-						$params[] = $placeholder . ' => \'' . $value . '\'';
-					}
-				}
-				if (empty($params)) {
-					$this->logger->debug('DB QueryBuilder: \'{query}\'', [
-						'query' => $this->getSQL(),
-						'app' => 'core',
-					]);
+			$params = [];
+			foreach ($this->getParameters() as $placeholder => $value) {
+				if (is_array($value)) {
+					$params[] = $placeholder . ' => (\'' . implode('\', \'', $value) . '\')';
 				} else {
-					$this->logger->debug('DB QueryBuilder: \'{query}\' with parameters: {params}', [
-						'query' => $this->getSQL(),
-						'params' => implode(', ', $params),
-						'app' => 'core',
-					]);
+					$params[] = $placeholder . ' => \'' . $value . '\'';
 				}
-			} catch (\Error $e) {
-				// likely an error during conversion of $value to string
-				$this->logger->debug('DB QueryBuilder: error trying to log SQL query');
-				$this->logger->logException($e);
 			}
-		}
-
-		if (!empty($this->getQueryPart('select'))) {
-			$select = $this->getQueryPart('select');
-			$hasSelectAll = array_filter($select, static function ($s) {
-				return $s === '*';
-			});
-			$hasSelectSpecific = array_filter($select, static function ($s) {
-				return $s !== '*';
-			});
-
-			if (empty($hasSelectAll) === empty($hasSelectSpecific)) {
-				$exception = new QueryException('Query is selecting * and specific values in the same query. This is not supported in Oracle.');
-				$this->logger->logException($exception, [
-					'message' => 'Query is selecting * and specific values in the same query. This is not supported in Oracle.',
+			if (empty($params)) {
+				$this->logger->debug('DB QueryBuilder: \'{query}\'', [
 					'query' => $this->getSQL(),
-					'level' => ILogger::ERROR,
+					'app' => 'core',
+				]);
+			} else {
+				$this->logger->debug('DB QueryBuilder: \'{query}\' with parameters: {params}', [
+					'query' => $this->getSQL(),
+					'params' => implode(', ', $params),
 					'app' => 'core',
 				]);
 			}
 		}
 
+		return $this->queryBuilder->execute();
 		$numberOfParameters = 0;
 		$hasTooLargeArrayParameter = false;
 		foreach ($this->getParameters() as $parameter) {
@@ -282,12 +244,6 @@ class QueryBuilder implements IQueryBuilder {
 				'app' => 'core',
 			]);
 		}
-		
-		$result = $this->queryBuilder->execute();
-		if (is_int($result)) {
-			return $result;
-		}
-		return new ResultAdapter($result);
 	}
 
 	/**
@@ -438,7 +394,7 @@ class QueryBuilder implements IQueryBuilder {
 	 * Gets the maximum number of results the query object was set to retrieve (the "limit").
 	 * Returns NULL if {@link setMaxResults} was not applied to this query builder.
 	 *
-	 * @return int|null The maximum number of results.
+	 * @return integer The maximum number of results.
 	 */
 	public function getMaxResults() {
 		return $this->queryBuilder->getMaxResults();
@@ -774,7 +730,7 @@ class QueryBuilder implements IQueryBuilder {
 	 * </code>
 	 *
 	 * @param string $key The column to set.
-	 * @param ILiteral|IParameter|IQueryFunction|string $value The value, expression, placeholder, etc.
+	 * @param IParameter|string $value The value, expression, placeholder, etc.
 	 *
 	 * @return $this This QueryBuilder instance.
 	 */
@@ -954,7 +910,7 @@ class QueryBuilder implements IQueryBuilder {
 	public function setValue($column, $value) {
 		$this->queryBuilder->setValue(
 			$this->helper->quoteColumnName($column),
-			(string) $value
+			$value
 		);
 
 		return $this;
@@ -1133,7 +1089,7 @@ class QueryBuilder implements IQueryBuilder {
 	 * placeholder for you. An automatic placeholder will be of the name
 	 * ':dcValue1', ':dcValue2' etc.
 	 *
-	 * For more information see {@link https://www.php.net/pdostatement-bindparam}
+	 * For more information see {@link http://php.net/pdostatement-bindparam}
 	 *
 	 * Example:
 	 * <code>

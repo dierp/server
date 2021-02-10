@@ -6,7 +6,6 @@
  * @author Blaok <i@blaok.me>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author J0WI <J0WI@users.noreply.github.com>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Joel S <joel.devbox@protonmail.com>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
@@ -15,7 +14,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -35,15 +34,15 @@
 
 namespace OCA\Files\Command;
 
+use Doctrine\DBAL\Connection;
 use OC\Core\Command\Base;
 use OC\Core\Command\InterruptedException;
-use OC\DB\Connection;
-use OC\DB\ConnectionAdapter;
 use OC\ForbiddenException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Mount\IMountPoint;
 use OCP\Files\NotFoundException;
 use OCP\Files\StorageNotAvailableException;
+use OCP\IDBConnection;
 use OCP\IUserManager;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
@@ -118,12 +117,7 @@ class Scan extends Base {
 
 	protected function scanFiles($user, $path, OutputInterface $output, $backgroundScan = false, $recursive = true, $homeOnly = false) {
 		$connection = $this->reconnectToDatabase($output);
-		$scanner = new \OC\Files\Utils\Scanner(
-			$user,
-			new ConnectionAdapter($connection),
-			\OC::$server->query(IEventDispatcher::class),
-			\OC::$server->getLogger()
-		);
+		$scanner = new \OC\Files\Utils\Scanner($user, $connection, \OC::$server->query(IEventDispatcher::class), \OC::$server->getLogger());
 
 		# check on each file/folder if there was a user interrupt (ctrl-c) and throw an exception
 
@@ -242,7 +236,7 @@ class Scan extends Base {
 	/**
 	 * Processes PHP errors as exceptions in order to be able to keep track of problems
 	 *
-	 * @see https://www.php.net/manual/en/function.set-error-handler.php
+	 * @see https://secure.php.net/manual/en/function.set-error-handler.php
 	 *
 	 * @param int $severity the level of the error raised
 	 * @param string $message
@@ -305,12 +299,15 @@ class Scan extends Base {
 	protected function formatExecTime() {
 		$secs = round($this->execTime);
 		# convert seconds into HH:MM:SS form
-		return sprintf('%02d:%02d:%02d', ($secs / 3600), ($secs / 60 % 60), $secs % 60);
+		return sprintf('%02d:%02d:%02d', ($secs/3600), ($secs/60%60), $secs%60);
 	}
 
-	protected function reconnectToDatabase(OutputInterface $output): Connection {
-		/** @var Connection $connection */
-		$connection = \OC::$server->get(Connection::class);
+	/**
+	 * @return \OCP\IDBConnection
+	 */
+	protected function reconnectToDatabase(OutputInterface $output) {
+		/** @var Connection | IDBConnection $connection */
+		$connection = \OC::$server->getDatabaseConnection();
 		try {
 			$connection->close();
 		} catch (\Exception $ex) {

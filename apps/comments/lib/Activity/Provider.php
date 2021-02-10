@@ -185,7 +185,7 @@ class Provider implements IProvider {
 		// they will get the dead entries in their stream.
 		return [
 			'actor' => $subjectParameters[0],
-			'fileId' => $event->getObjectId(),
+			'fileId' => (int) $event->getObjectId(),
 			'filePath' => trim($subjectParameters[1], '/'),
 		];
 	}

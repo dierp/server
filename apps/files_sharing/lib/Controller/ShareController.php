@@ -23,7 +23,7 @@
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Sascha Sambale <mastixmc@gmail.com>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -414,10 +414,7 @@ class ShareController extends AuthPublicShareController {
 		$shareTmpl['showgridview'] = false;
 
 		$shareTmpl['hideFileList'] = $hideFileList;
-		$shareTmpl['downloadURL'] = $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.downloadShare', [
-			'token' => $this->getToken(),
-			'filename' => $shareIsFolder ? null : $shareNode->getName()
-		]);
+		$shareTmpl['downloadURL'] = $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.downloadShare', ['token' => $this->getToken()]);
 		$shareTmpl['shareUrl'] = $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.showShare', ['token' => $this->getToken()]);
 		$shareTmpl['maxSizeAnimateGif'] = $this->config->getSystemValue('max_filesize_animated_gifs_public_sharing', 10);
 		$shareTmpl['previewEnabled'] = $this->config->getSystemValue('enable_previews', true);
@@ -556,7 +553,7 @@ class ShareController extends AuthPublicShareController {
 		$share = $this->shareManager->getShareByToken($token);
 
 		if (!($share->getPermissions() & \OCP\Constants::PERMISSION_READ)) {
-			return new \OCP\AppFramework\Http\DataResponse('Share has no read permission');
+			return new \OCP\AppFramework\Http\DataResponse('Share is read-only');
 		}
 
 		$files_list = null;

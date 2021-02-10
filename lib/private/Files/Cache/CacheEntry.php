@@ -2,7 +2,6 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Robin Appelman <robin@icewind.nl>
  *
  * @license AGPL-3.0
@@ -28,7 +27,7 @@ use OCP\Files\Cache\ICacheEntry;
 /**
  * meta data for a file or folder
  */
-class CacheEntry implements ICacheEntry {
+class CacheEntry implements ICacheEntry, \ArrayAccess {
 	/**
 	 * @var array
 	 */
@@ -68,7 +67,7 @@ class CacheEntry implements ICacheEntry {
 
 
 	public function getPath() {
-		return (string)$this->data['path'];
+		return $this->data['path'];
 	}
 
 

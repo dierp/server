@@ -4,9 +4,9 @@
  *
  * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Björn Schießle <bjoern@schiessle.org>
- * @author Joas Schilling <coding@schilljs.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  *
  * @license AGPL-3.0
@@ -27,10 +27,11 @@
 
 namespace OCA\FederatedFileSharing\BackgroundJob;
 
+use OC\BackgroundJob\Job;
+use OC\BackgroundJob\JobList;
+use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Notifications;
-use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
-use OCP\BackgroundJob\Job;
 use OCP\ILogger;
 
 /**
@@ -55,20 +56,38 @@ class RetryJob extends Job {
 	/** @var int how much time should be between two tries (10 minutes) */
 	private $interval = 600;
 
-
-	public function __construct(Notifications $notifications,
-								ITimeFactory $timeFactory) {
-		parent::__construct($timeFactory);
-		$this->notifications = $notifications;
+	/**
+	 * UnShare constructor.
+	 *
+	 * @param Notifications $notifications
+	 */
+	public function __construct(Notifications $notifications = null) {
+		if ($notifications) {
+			$this->notifications = $notifications;
+		} else {
+			$addressHandler = new AddressHandler(
+				\OC::$server->getURLGenerator(),
+				\OC::$server->getL10N('federatedfilesharing'),
+				\OC::$server->getCloudIdManager()
+			);
+			$this->notifications = new Notifications(
+				$addressHandler,
+				\OC::$server->getHTTPClientService(),
+				\OC::$server->query(\OCP\OCS\IDiscoveryService::class),
+				\OC::$server->getJobList(),
+				\OC::$server->getCloudFederationProviderManager(),
+				\OC::$server->getCloudFederationFactory()
+			);
+		}
 	}
 
 	/**
 	 * run the job, then remove it from the jobList
 	 *
-	 * @param IJobList $jobList
+	 * @param JobList $jobList
 	 * @param ILogger|null $logger
 	 */
-	public function execute(IJobList $jobList, ILogger $logger = null) {
+	public function execute($jobList, ILogger $logger = null) {
 		if ($this->shouldRun($this->argument)) {
 			parent::execute($jobList, $logger);
 			$jobList->remove($this, $this->argument);
@@ -108,7 +127,7 @@ class RetryJob extends Job {
 				'data' => $argument['data'],
 				'action' => $argument['action'],
 				'try' => (int)$argument['try'] + 1,
-				'lastRun' => $this->time->getTime()
+				'lastRun' => time()
 			]
 		);
 	}
@@ -121,6 +140,6 @@ class RetryJob extends Job {
 	 */
 	protected function shouldRun(array $argument) {
 		$lastRun = (int)$argument['lastRun'];
-		return (($this->time->getTime() - $lastRun) > $this->interval);
+		return ((time() - $lastRun) > $this->interval);
 	}
 }

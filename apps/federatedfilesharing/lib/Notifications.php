@@ -5,7 +5,6 @@
  * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Björn Schießle <bjoern@schiessle.org>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Julius Härtl <jus@bitgrid.net>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  *
@@ -119,7 +118,7 @@ class Notifications {
 			$ocsStatus = isset($status['ocs']);
 			$ocsSuccess = $ocsStatus && ($status['ocs']['meta']['statuscode'] === 100 || $status['ocs']['meta']['statuscode'] === 200);
 
-			if ($result['success'] && (!$ocsStatus || $ocsSuccess)) {
+			if ($result['success'] && (!$ocsStatus ||$ocsSuccess)) {
 				$event = new FederatedShareAddedEvent($remote);
 				$this->eventDispatcher->dispatchTyped($event);
 				return true;
@@ -306,7 +305,7 @@ class Notifications {
 	 * @return array
 	 * @throws \Exception
 	 */
-	protected function tryHttpPostToShareEndpoint($remoteDomain, $urlSuffix, array $fields, $action = "share") {
+	protected function tryHttpPostToShareEndpoint($remoteDomain, $urlSuffix, array $fields, $action="share") {
 		if ($this->addressHandler->urlContainProtocol($remoteDomain) === false) {
 			$remoteDomain = 'https://' . $remoteDomain;
 		}

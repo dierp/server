@@ -31,6 +31,7 @@ namespace OCA\DAV\CardDAV;
 
 use OC\Accounts\AccountManager;
 use OCP\AppFramework\Http;
+use OCP\ICertificateManager;
 use OCP\ILogger;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -154,7 +155,8 @@ class SyncService {
 			return $this->certPath;
 		}
 
-		$certManager = \OC::$server->getCertificateManager();
+		/** @var ICertificateManager $certManager */
+		$certManager = \OC::$server->getCertificateManager(null);
 		$certPath = $certManager->getAbsoluteBundlePath();
 		if (file_exists($certPath)) {
 			$this->certPath = $certPath;

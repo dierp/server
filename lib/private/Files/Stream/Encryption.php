@@ -12,7 +12,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Vincent Petry <pvince81@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -34,8 +34,6 @@ namespace OC\Files\Stream;
 
 use Icewind\Streams\Wrapper;
 use OC\Encryption\Exceptions\EncryptionHeaderKeyExistsException;
-use function is_array;
-use function stream_context_create;
 
 class Encryption extends Wrapper {
 
@@ -192,22 +190,17 @@ class Encryption extends Wrapper {
 	/**
 	 * add stream wrapper
 	 *
-	 * @param resource|int $source
-	 * @param resource|array $context
-	 * @param string|null $protocol
-	 * @param string|null $class
+	 * @param resource $source
 	 * @param string $mode
+	 * @param resource $context
+	 * @param string $protocol
+	 * @param string $class
 	 * @return resource
 	 * @throws \BadMethodCallException
 	 */
-	protected static function wrapSource($source, $context = [], $protocol = null, $class = null, $mode = 'r+') {
+	protected static function wrapSource($source, $context, $protocol, $class, $mode = 'r+') {
 		try {
-			if ($protocol === null) {
-				$protocol = self::getProtocol($class);
-			}
-
 			stream_wrapper_register($protocol, $class);
-			$context = self::buildContext($protocol, $context, $source);
 			if (self::isDirectoryHandle($source)) {
 				$wrapped = opendir($protocol . '://', $context);
 			} else {
@@ -222,25 +215,13 @@ class Encryption extends Wrapper {
 	}
 
 	/**
-	 * @todo this is a copy of \Icewind\Streams\WrapperHandler::buildContext -> combine to one shared method?
-	 */
-	private static function buildContext($protocol, $context, $source) {
-		if (is_array($context)) {
-			$context['source'] = $source;
-			return stream_context_create([$protocol => $context]);
-		}
-
-		return $context;
-	}
-
-	/**
 	 * Load the source from the stream context and return the context options
 	 *
-	 * @param string|null $name
+	 * @param string $name
 	 * @return array
 	 * @throws \BadMethodCallException
 	 */
-	protected function loadContext($name = null) {
+	protected function loadContext($name) {
 		$context = parent::loadContext($name);
 
 		foreach ($this->expectedContextProperties as $property) {
@@ -333,7 +314,7 @@ class Encryption extends Wrapper {
 		}
 		return $result;
 	}
-
+	
 	/**
 	 * stream_read_block
 	 *
@@ -451,7 +432,7 @@ class Encryption extends Wrapper {
 
 	public function stream_close() {
 		$this->flush('end');
-		$position = (int)floor($this->position / $this->unencryptedBlockSize);
+		$position = (int)floor($this->position/$this->unencryptedBlockSize);
 		$remainingData = $this->encryptionModule->end($this->fullPath, $position . 'end');
 		if ($this->readOnly === false) {
 			if (!empty($remainingData)) {
@@ -484,7 +465,7 @@ class Encryption extends Wrapper {
 			// automatically attempted when the file is written to disk -
 			// we are handling that separately here and we don't want to
 			// get into an infinite loop
-			$position = (int)floor($this->position / $this->unencryptedBlockSize);
+			$position = (int)floor($this->position/$this->unencryptedBlockSize);
 			$encrypted = $this->encryptionModule->encrypt($this->cache, $position . $positionPrefix);
 			$bytesWritten = parent::stream_write($encrypted);
 			$this->writeFlag = false;
@@ -492,8 +473,8 @@ class Encryption extends Wrapper {
 			// If so then update the encrypted filesize
 			// Note that the unencrypted pointer and filesize are NOT yet updated when flush() is called
 			// We recalculate the encrypted filesize as we do not know the context of calling flush()
-			$completeBlocksInFile = (int)floor($this->unencryptedSize / $this->unencryptedBlockSize);
-			if ($completeBlocksInFile === (int)floor($this->position / $this->unencryptedBlockSize)) {
+			$completeBlocksInFile=(int)floor($this->unencryptedSize/$this->unencryptedBlockSize);
+			if ($completeBlocksInFile === (int)floor($this->position/$this->unencryptedBlockSize)) {
 				$this->size = $this->util->getBlockSize() * $completeBlocksInFile;
 				$this->size += $bytesWritten;
 				$this->size += $this->headerSize;
@@ -512,7 +493,7 @@ class Encryption extends Wrapper {
 		if ($this->cache === '' && !($this->position === $this->unencryptedSize && ($this->position % $this->unencryptedBlockSize) === 0)) {
 			// Get the data from the file handle
 			$data = $this->stream_read_block($this->util->getBlockSize());
-			$position = (int)floor($this->position / $this->unencryptedBlockSize);
+			$position = (int)floor($this->position/$this->unencryptedBlockSize);
 			$numberOfChunks = (int)($this->unencryptedSize / $this->unencryptedBlockSize);
 			if ($numberOfChunks === $position) {
 				$position .= 'end';

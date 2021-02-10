@@ -3,7 +3,6 @@
  * @copyright Copyright (c) 2018 Bjoern Schiessle <bjoern@schiessle.org>
  *
  * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -76,7 +75,7 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 								IClientService $httpClientService,
 								ICloudIdManager $cloudIdManager,
 								ILogger $logger) {
-		$this->cloudFederationProvider = [];
+		$this->cloudFederationProvider= [];
 		$this->appManager = $appManager;
 		$this->httpClientService = $httpClientService;
 		$this->cloudIdManager = $cloudIdManager;
